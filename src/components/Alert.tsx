@@ -1,69 +1,63 @@
-import React from "react";
-import clsx from "clsx";
+import React from 'react';
+import clsx from 'clsx';
 
-import { Button, Icon } from ".";
+import { Button, Icon } from '.';
 
 type Props = {
-  severity: "error" | "info" | "success" | "warning";
+  severity: 'error' | 'info' | 'success' | 'warning';
   onClose?(): void;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 const Alert: React.FC<Props> = ({ severity, onClose, className, children }) => {
   const color = {
     bg: {
-      warning: "bg-yellow-50",
-      error: "bg-red-50",
-      success: "bg-green-50",
-      info: "bg-blue-50",
+      warning: 'bg-yellow-50',
+      error: 'bg-red-50',
+      success: 'bg-green-50',
+      info: 'bg-blue-50',
     },
     icon: {
-      warning: "text-yellow-400",
-      error: "text-red-400",
-      success: "text-green-400",
-      info: "text-blue-400",
+      warning: 'text-yellow-400',
+      error: 'text-red-400',
+      success: 'text-green-400',
+      info: 'text-blue-400',
     },
     text: {
-      warning: "text-yellow-800",
-      error: "text-red-800",
-      success: "text-green-800",
-      info: "text-blue-700",
+      warning: 'text-yellow-800',
+      error: 'text-red-800',
+      success: 'text-green-800',
+      info: 'text-blue-700',
     },
     hover: {
-      warning: "hover:bg-yellow-100",
-      error: "hover:bg-red-100",
-      success: "hover:bg-green-100",
-      info: "hover:bg-blue-100",
+      warning: 'hover:bg-yellow-100',
+      error: 'hover:bg-red-100',
+      success: 'hover:bg-green-100',
+      info: 'hover:bg-blue-100',
     },
     ring: {
-      warning: "focus:ring-yellow-400",
-      error: "focus:ring-red-400",
-      success: "focus:ring-green-400",
-      info: "focus:ring-blue-400",
+      warning: 'focus:ring-yellow-400',
+      error: 'focus:ring-red-400',
+      success: 'focus:ring-green-400',
+      info: 'focus:ring-blue-400',
     },
   };
 
   const icons = {
-    error: "x-circle",
-    info: "information-circle",
-    success: "check-circle",
-    warning: "exclamation",
+    error: 'x-circle',
+    info: 'information-circle',
+    success: 'check-circle',
+    warning: 'exclamation',
   };
 
   return (
-    <div className={clsx("rounded-md p-4", color.bg[severity], className)}>
+    <div className={clsx('rounded-md p-4', color.bg[severity], className)}>
       <div className="flex">
         <div className="flex-shrink-0">
-          <Icon
-            name={icons[severity]}
-            variant="solid"
-            className={clsx("h-5 w-5", color.icon[severity])}
-          />
+          <Icon name={icons[severity]} variant="solid" className={clsx('h-5 w-5', color.icon[severity])} />
         </div>
-        <div className={clsx("text-sm font-medium", color.text[severity])}>
-          {children}
-        </div>
+        <div className={clsx('text-sm font-medium', color.text[severity])}>{children}</div>
         {onClose && (
           <div className="ml-auto pl-3">
             <div className="-mx-1.5 -my-1.5">
@@ -76,7 +70,7 @@ const Alert: React.FC<Props> = ({ severity, onClose, className, children }) => {
                   color.text[severity],
                   color.hover[severity],
                   color.ring[severity],
-                  "focus:outline-none focus:ring-1 focus:ring-offset-0"
+                  'focus:outline-none focus:ring-1 focus:ring-offset-0'
                 )}
               >
                 <Icon name="x" />

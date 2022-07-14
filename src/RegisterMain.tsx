@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { getAuth, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, getDocs, collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import { Button, Card, Flex, Form, Grid, Icon, Table } from './components';
+import { Button, Card, Flex, Form, Grid, Icon, Table, Tooltip } from './components';
 import { Brand } from './components/type';
 import { useAppContext } from './AppContext';
 import RegisterPayment from './RegisterPayment';
@@ -9,7 +10,7 @@ import RegisterInput from './RegisterInput';
 import RegisterModify from './RegisterModify';
 import RegisterSearch from './RegisterSearch';
 import { Product, ProductSellingPrice, BasketItem, RegisterItem, RegisterStatus, ShortcutItem } from './types';
-import { OTC_DIVISION, toAscii } from './tools';
+import { OTC_DIVISION, nameWithCode, toAscii } from './tools';
 
 const db = getFirestore();
 
@@ -37,6 +38,21 @@ const RegisterMain: React.FC = () => {
   const [registerClosed, setRegisterClosed] = useState<boolean>(false);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatus>();
   const registerSign = registerMode === 'Return' ? -1 : 1;
+
+  const logout = () => {
+    if (window.confirm('ログアウトしますか？')) {
+      const auth = getAuth();
+      signOut(auth)
+        .then(function () {
+          // Sign-out successful.
+        })
+        .catch(function (error) {
+          // An error happened.
+          alert('エラーが発生しました。');
+          console.log({ error });
+        });
+    }
+  };
 
   const findProduct = async (code: string) => {
     try {
@@ -252,7 +268,7 @@ const RegisterMain: React.FC = () => {
       <Card className="container justify-center m-2 w-1/2">
         <Card.Body>
           {registerClosed ? (
-            <Flex className="mt-16 ml-4">
+            <Flex className="mt-8 ml-4">
               <Link to="/register_open">
                 <Button color="warning" size="xs" className="h-8">
                   レジ開設
@@ -264,7 +280,7 @@ const RegisterMain: React.FC = () => {
             </Flex>
           ) : (
             <Flex>
-              <Form className="mt-16 ml-4" onSubmit={handleSubmit}>
+              <Form className="mt-8 ml-4" onSubmit={handleSubmit}>
                 <Form.Text
                   id="productCode"
                   size="md"
@@ -279,7 +295,7 @@ const RegisterMain: React.FC = () => {
                 color="light"
                 size="xs"
                 disabled={registerClosed}
-                className="mt-16 ml-4 w-24"
+                className="mt-8 ml-4 w-24"
                 onClick={() => setOpenSearch(true)}
               >
                 商品検索
@@ -289,7 +305,7 @@ const RegisterMain: React.FC = () => {
                 color={registerMode === 'Sales' ? 'info' : 'light'}
                 size="xs"
                 disabled={basketItems.length > 0 || registerClosed}
-                className="w-16 mt-16 ml-16"
+                className="w-16 mt-8 ml-16"
                 onClick={() => setRegisterMode('Sales')}
               >
                 売上
@@ -299,7 +315,7 @@ const RegisterMain: React.FC = () => {
                 color={registerMode === 'Return' ? 'info' : 'light'}
                 size="xs"
                 disabled={basketItems.length > 0 || registerClosed}
-                className="w-16 mt-16"
+                className="w-16 mt-8"
                 onClick={() => setRegisterMode('Return')}
               >
                 返品
@@ -309,7 +325,7 @@ const RegisterMain: React.FC = () => {
 
           <Flex className="w-full">
             <div className="w-1/2 mx-4 my-2 h-4 text-xs text-red-500 font-bold">{productError}</div>
-            <Flex justify_content="end" className="w-1/2">
+            <Flex justify_content="end" className="w-1/2 pt-">
               {basketItems.length > 0 ? (
                 <Button
                   color="danger"
@@ -452,8 +468,12 @@ const RegisterMain: React.FC = () => {
       {registerItems.length > 0 && shortcuts.length > 0 && (
         <Card className="m-2 w-1/2">
           <Card.Body>
-            <p className="mt-9 mr-2 text-sm text-right">
-              {registerClosed ? '\u00A0' : `日付：${registerStatus?.date.toDate().toLocaleDateString()}`}
+            <p className="mt-1 mr-2 text-sm text-right">
+              {currentShop && `\u00A0 ${nameWithCode(currentShop)} \u00A0`}
+              {!registerClosed && `\u00A0 ${registerStatus?.date.toDate().toLocaleDateString()} \u00A0`}
+              <Link to="/" onClick={logout} className="underline">
+                ログアウト
+              </Link>
             </p>
             <div className="p-2">
               <div className="grid grid-cols-4 gap-2">
@@ -536,6 +556,7 @@ const RegisterMain: React.FC = () => {
                           };
                           setBasketItems(addBundleDiscount([...basketItems, basketItem]));
                         }
+                        document.getElementById('productCode')?.focus();
                       }
                     }}
                     key={index}

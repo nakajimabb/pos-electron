@@ -1,8 +1,8 @@
-import React from "react";
-import clsx from "clsx";
+import React from 'react';
+import clsx from 'clsx';
 
-import { Size2 } from "./type";
-import { Button, Icon, Flex } from "./";
+import { Size2 } from './type';
+import { Button, Icon, Flex } from './';
 
 type HeaderProps = {
   centered?: boolean;
@@ -10,33 +10,22 @@ type HeaderProps = {
   showCloseButton?: boolean;
   onClose?(): void;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
-const ModalHeader: React.FC<HeaderProps> = ({
-  centered = false,
-  padding = 3,
-  onClose,
-  className,
-  children,
-}) => {
+const ModalHeader: React.FC<HeaderProps> = ({ centered = false, padding = 3, onClose, className, children }) => {
   return (
     <h1
       className={clsx(
-        "bg-white border text-lg leading-6 font-medium text-gray-900",
+        'bg-white border text-lg leading-6 font-medium text-gray-900',
         `p-${padding}`,
-        centered && "text-center",
+        centered && 'text-center',
         className
       )}
     >
       <Flex align_items="center">
         <div className="flex-1">{children}</div>
-        {onClose && (
-          <CloseButton
-            onClose={onClose}
-            className={clsx(padding === 0 && "mx-2")}
-          />
-        )}
+        {onClose && <CloseButton onClose={onClose} className={clsx(padding === 0 && 'mx-2')} />}
       </Flex>
     </h1>
   );
@@ -45,19 +34,15 @@ const ModalHeader: React.FC<HeaderProps> = ({
 type Props = {
   padding?: number;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 const ModalBody: React.FC<Props> = ({ padding = 4, className, children }) => {
-  return (
-    <div className={clsx("bg-white", `p-${padding}`, className)}>
-      {children}
-    </div>
-  );
+  return <div className={clsx('bg-white', `p-${padding}`, className)}>{children}</div>;
 };
 
 const ModalFooter: React.FC<Props> = ({ className, children }) => {
-  return <div className={clsx("px-4 py-3 border", className)}>{children}</div>;
+  return <div className={clsx('px-4 py-3 border', className)}>{children}</div>;
 };
 
 type CloseButtonProps = {
@@ -74,7 +59,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClose, className }) => {
       size="xs"
       onClick={onClose}
       className={clsx(
-        "text-gray-400 hover:text-gray-600 hover:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-offset-0 focus:ring-gray-400",
+        'text-gray-400 hover:text-gray-600 hover:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-offset-0 focus:ring-gray-400',
         className
       )}
     >
@@ -88,7 +73,7 @@ type ModalProps = {
   size?: Size2;
   onClose?(): void;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 type ModalType = React.FC<ModalProps> & {
@@ -97,22 +82,11 @@ type ModalType = React.FC<ModalProps> & {
   Footer: typeof ModalFooter;
 };
 
-const Modal: ModalType = ({
-  open,
-  size = "lg",
-  onClose,
-  className,
-  children,
-}) => {
+const Modal: ModalType = ({ open, size = 'lg', onClose, className, children }) => {
   if (!open) return null;
 
   return (
-    <div
-      className="fixed z-20 inset-0 overflow-y-auto"
-      aria-labelledby="modal-title"
-      role="dialog"
-      aria-modal="true"
-    >
+    <div className="fixed z-20 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div className="flex items-center justify-center min-h-screen p-3 text-center">
         {/* Background overlay */}
         <div
@@ -122,8 +96,8 @@ const Modal: ModalType = ({
         ></div>
         <div
           className={clsx(
-            "inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all",
-            size !== "none" && `max-w-${size}`,
+            'inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all',
+            size !== 'none' && `max-w-${size}`,
             className
           )}
         >

@@ -1,20 +1,14 @@
-import React from "react";
-import clsx from "clsx";
+import React from 'react';
+import clsx from 'clsx';
 
 type FlexProps = {
-  direction?: "row" | "row-reverse" | "col" | "col-reverse";
-  wrap?: "nowrap" | "wrap" | "wrap-reverse";
-  justify_content?:
-    | "start"
-    | "end"
-    | "center"
-    | "between"
-    | "around"
-    | "evenly";
-  align_items?: "start" | "end" | "center" | "baseline" | "stretch";
-  align_content?: "center" | "start" | "end" | "between" | "around" | "evenly";
+  direction?: 'row' | 'row-reverse' | 'col' | 'col-reverse';
+  wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+  justify_content?: 'start' | 'end' | 'center' | 'between' | 'around' | 'evenly';
+  align_items?: 'start' | 'end' | 'center' | 'baseline' | 'stretch';
+  align_content?: 'center' | 'start' | 'end' | 'between' | 'around' | 'evenly';
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 const Flex: React.FC<FlexProps> = ({
@@ -30,7 +24,7 @@ const Flex: React.FC<FlexProps> = ({
   return (
     <div
       className={clsx(
-        "flex",
+        'flex',
         direction && `flex-${direction}`,
         wrap && `flex-${wrap}`,
         justify_content && `justify-${justify_content}`,

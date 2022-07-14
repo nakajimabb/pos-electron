@@ -1,19 +1,14 @@
-import React, { useState } from "react";
-import clsx from "clsx";
+import React, { useState } from 'react';
+import clsx from 'clsx';
 
 type TooltipProps = {
   title: string;
   disabled?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
-const Tooltip: React.FC<TooltipProps> = ({
-  title,
-  disabled,
-  className,
-  children,
-}) => {
+const Tooltip: React.FC<TooltipProps> = ({ title, disabled, className, children }) => {
   const [show, setShow] = useState(false);
 
   const onMouseOver = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -34,10 +29,10 @@ const Tooltip: React.FC<TooltipProps> = ({
       {!disabled && (
         <div
           className={clsx(
-            !show && "hidden",
-            "opacity-90 bg-gray-600 text-white text-xs rounded px-2 py-1 whitespace-pre z-10",
-            "absolute left-1/2 top-full m-auto",
-            "transform -translate-x-1/2 translate-y-2",
+            !show && 'hidden',
+            'opacity-90 bg-gray-600 text-white text-xs rounded px-2 py-1 whitespace-pre z-10',
+            'absolute left-1/2 top-full m-auto',
+            'transform -translate-x-1/2 translate-y-2',
             className
           )}
         >

@@ -6,18 +6,6 @@ rules.push({
   use: [{ loader: 'style-loader' }, { loader: 'css-loader' }, { loader: 'postcss-loader' }],
 });
 
-// rules.push({
-//   test: /\.svg$/,
-//   use: [
-//     {
-//       loader: 'babel-loader',
-//     },
-//     {
-//       loader: 'react-svg-loader',
-//     },
-//   ],
-// });
-
 module.exports = {
   module: {
     rules,

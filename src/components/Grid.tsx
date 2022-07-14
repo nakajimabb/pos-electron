@@ -1,18 +1,18 @@
-import React from "react";
-import clsx from "clsx";
-import { makeResponsiveClasses } from "./tools";
+import React from 'react';
+import clsx from 'clsx';
+import { makeResponsiveClasses } from './tools';
 
 type GridProps = {
   cols?: string | number;
   rows?: string | number;
   gap?: string;
-  flow?: "row" | "col" | "row-dense" | "col-dense";
-  auto_cols?: "auto" | "min" | "max" | "fr";
-  auto_rows?: "auto" | "min" | "max" | "fr";
+  flow?: 'row' | 'col' | 'row-dense' | 'col-dense';
+  auto_cols?: 'auto' | 'min' | 'max' | 'fr';
+  auto_rows?: 'auto' | 'min' | 'max' | 'fr';
   template_cols?: string;
   template_rows?: string;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 const Grid: React.FC<GridProps> = ({
@@ -30,10 +30,10 @@ const Grid: React.FC<GridProps> = ({
   return (
     <div
       className={clsx(
-        "grid",
-        cols && makeResponsiveClasses(String(cols), "grid-cols"),
-        rows && makeResponsiveClasses(String(rows), "grid-rows"),
-        gap && makeResponsiveClasses(gap, "gap"),
+        'grid',
+        cols && makeResponsiveClasses(String(cols), 'grid-cols'),
+        rows && makeResponsiveClasses(String(rows), 'grid-rows'),
+        gap && makeResponsiveClasses(gap, 'gap'),
         flow && `grid-flow-${flow}`,
         auto_cols && `auto-cols-${auto_cols}`,
         auto_rows && `auto-rows-${auto_rows}`,

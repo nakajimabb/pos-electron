@@ -1,27 +1,19 @@
-import React from "react";
-import clsx from "clsx";
+import React from 'react';
+import clsx from 'clsx';
 
-import { Button, Icon, Flex } from "./";
+import { Button, Icon, Flex } from './';
 
 type Props = {
   page: number;
   count: number;
-  size: "sm" | "md";
+  size: 'sm' | 'md';
   color?: string;
   onChange?: (value: number) => void;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
-const Pagination: React.FC<Props> = ({
-  page,
-  count,
-  size,
-  color,
-  onChange,
-  className,
-  children,
-}) => {
+const Pagination: React.FC<Props> = ({ page, count, size, color, onChange, className, children }) => {
   if (count < 2) return null;
 
   const wh = { sm: 6, md: 8 }[size];
@@ -41,7 +33,7 @@ const Pagination: React.FC<Props> = ({
         disabled={page === 1}
         onClick={onChange && page > 1 ? () => onChange(page - 1) : undefined}
         className={clsx(
-          "mr-1 text-gray-500 hover:bg-gray-200 focus:ring-inset focus:ring-gray-300",
+          'mr-1 text-gray-500 hover:bg-gray-200 focus:ring-inset focus:ring-gray-300',
           `w-${wh - 2} h-${wh - 2}`
         )}
       >
@@ -52,10 +44,10 @@ const Pagination: React.FC<Props> = ({
           {i > 0 && pp - pages[i - 1] > 1 && <>...</>}
           <div
             className={clsx(
-              "rounded-full border mx-1 flex justify-center items-center cursor-pointer",
+              'rounded-full border mx-1 flex justify-center items-center cursor-pointer',
               color && `bg-${color}`,
-              pp === page && "bg-gray-300",
-              pp !== page && "hover:bg-gray-200",
+              pp === page && 'bg-gray-300',
+              pp !== page && 'hover:bg-gray-200',
               `w-${wh} h-${wh} text-${size} `
             )}
             onClick={onChange && pp !== page ? () => onChange(pp) : undefined}
@@ -69,11 +61,9 @@ const Pagination: React.FC<Props> = ({
         size="none"
         color="none"
         disabled={page === count}
-        onClick={
-          onChange && page < count ? () => onChange(page + 1) : undefined
-        }
+        onClick={onChange && page < count ? () => onChange(page + 1) : undefined}
         className={clsx(
-          "mr-1 text-gray-500 hover:bg-gray-200 focus:ring-inset focus:ring-gray-300",
+          'mr-1 text-gray-500 hover:bg-gray-200 focus:ring-inset focus:ring-gray-300',
           `w-${wh - 2} h-${wh - 2}`
         )}
       >

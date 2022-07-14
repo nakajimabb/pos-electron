@@ -1,26 +1,26 @@
-import React from "react";
-import clsx from "clsx";
+import React from 'react';
+import clsx from 'clsx';
 
 type Props = {
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 const CardHeader: React.FC<Props> = ({ className, children }) => {
-  return <h1 className={clsx("px-4 py-2", className)}>{children}</h1>;
+  return <h1 className={clsx('px-4 py-2', className)}>{children}</h1>;
 };
 
 const CardBody: React.FC<Props> = ({ className, children }) => {
-  return <div className={clsx("p-2", className)}>{children}</div>;
+  return <div className={clsx('p-2', className)}>{children}</div>;
 };
 
 const CardFooter: React.FC<Props> = ({ className, children }) => {
-  return <div className={clsx("p-2", className)}>{children}</div>;
+  return <div className={clsx('p-2', className)}>{children}</div>;
 };
 
 type CardProps = {
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 type CardType = React.FC<CardProps> & {
@@ -31,12 +31,7 @@ type CardType = React.FC<CardProps> & {
 
 const Card: CardType = ({ className, children }) => {
   return (
-    <div
-      className={clsx(
-        "overflow-hidden rounded bg-white border shadow focus:shadow-outline",
-        className
-      )}
-    >
+    <div className={clsx('overflow-hidden rounded bg-white border shadow focus:shadow-outline', className)}>
       {children}
     </div>
   );

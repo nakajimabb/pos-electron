@@ -1,22 +1,18 @@
-import React, { useState } from "react";
-import { Alert, Button, Form } from "./components";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signInAnonymously,
-} from "firebase/auth";
-import firebaseError from "./firebaseError";
-import firebaseApp from "./firebase";
+import React, { useState } from 'react';
+import { Alert, Button, Form } from './components';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import firebaseError from './firebaseError';
+import firebaseApp from './firebase';
 
-const MAIL_DOMAIN = "@ebondregister.com";
+const MAIL_DOMAIN = '@ebondregister.com';
 
 const SignInUserCode: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [account, setAccount] = useState({ code: "", password: "" });
-  const [error, setError] = useState<string>("");
+  const [account, setAccount] = useState({ code: '', password: '' });
+  const [error, setError] = useState<string>('');
 
   const login = (e: React.FormEvent) => {
-    if (account.code[0] === "$") {
+    if (account.code[0] === '$') {
       const auth = getAuth(firebaseApp);
       const email = account.code.slice(1) + MAIL_DOMAIN;
       setLoading(true);
@@ -31,7 +27,7 @@ const SignInUserCode: React.FC = () => {
         });
     } else {
       e.preventDefault();
-      setError("ユーザーが存在しません。");
+      setError('ユーザーが存在しません。');
     }
   };
 
@@ -61,13 +57,7 @@ const SignInUserCode: React.FC = () => {
           setAccount({ ...account, password: e.target.value });
         }}
       />
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={login}
-        disabled={loading}
-        className="w-full"
-      >
+      <Button variant="contained" color="primary" onClick={login} disabled={loading} className="w-full">
         ログイン
       </Button>
       {error && (

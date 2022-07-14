@@ -24,7 +24,7 @@ import {
   DocumentSnapshot,
 } from 'firebase/firestore';
 import { getAuth, User, onAuthStateChanged } from 'firebase/auth';
-import { userCodeFromEmail, OTC_DIVISION, hiraToKana, isNum } from './tools';
+import { userCodeFromEmail, OTC_DIVISION, hiraToKana } from './tools';
 import {
   Role,
   Product,
