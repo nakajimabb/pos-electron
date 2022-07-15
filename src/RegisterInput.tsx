@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Button, Form, Modal, Table } from "./components";
-import { useAppContext } from "./AppContext";
-import { BasketItem, RegisterItem } from "./types";
-import { toNumber } from "./tools";
+import React, { useState, useEffect } from 'react';
+import { Button, Form, Modal, Table } from './components';
+import { useAppContext } from './AppContext';
+import { BasketItem, RegisterItem } from './types';
+import { toNumber } from './tools';
 
 type Props = {
   open: boolean;
@@ -12,45 +12,30 @@ type Props = {
   onClose: () => void;
 };
 
-const RegisterInput: React.FC<Props> = ({
-  open,
-  registerItem,
-  basketItems,
-  setBasketItems,
-  onClose,
-}) => {
-  const [priceText, setPriceText] = useState<string>("0");
+const RegisterInput: React.FC<Props> = ({ open, registerItem, basketItems, setBasketItems, onClose }) => {
+  const [priceText, setPriceText] = useState<string>('0');
   const { addBundleDiscount, fixedCostRates } = useAppContext();
 
   useEffect(() => {
-    const inputPrice = document.getElementById(
-      "inputPrice"
-    ) as HTMLInputElement;
-    if (inputPrice && registerItem)
-      inputPrice.value = toNumber(String(registerItem.defaultPrice)).toString();
+    const inputPrice = document.getElementById('inputPrice') as HTMLInputElement;
+    if (inputPrice && registerItem) inputPrice.value = toNumber(String(registerItem.defaultPrice)).toString();
     inputPrice?.focus();
     inputPrice?.select();
   }, [open, registerItem]);
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    const inputPrice = document.getElementById(
-      "inputPrice"
-    ) as HTMLInputElement;
+    const inputPrice = document.getElementById('inputPrice') as HTMLInputElement;
     const price = toNumber(inputPrice.value);
     if (registerItem && price !== 0) {
-      const existingRateIndex = fixedCostRates.findIndex(
-        (rate) => rate.productCode === registerItem.code
-      );
+      const existingRateIndex = fixedCostRates.findIndex((rate) => rate.productCode === registerItem.code);
       const costPrice =
-        existingRateIndex >= 0
-          ? Math.floor((price * fixedCostRates[existingRateIndex].rate) / 100)
-          : null;
+        existingRateIndex >= 0 ? Math.floor((price * fixedCostRates[existingRateIndex].rate) / 100) : null;
       const basketItem: any = {
         product: {
-          abbr: "",
+          abbr: '',
           code: registerItem.code,
-          kana: "",
+          kana: '',
           name: registerItem.name,
           hidden: false,
           costPrice: costPrice,
@@ -63,7 +48,7 @@ const RegisterInput: React.FC<Props> = ({
           selfMedication: false,
           supplierRef: null,
           categoryRef: null,
-          note: "",
+          note: '',
         },
         division: registerItem.division,
         outputReceipt: registerItem.outputReceipt,
@@ -71,17 +56,12 @@ const RegisterInput: React.FC<Props> = ({
       };
       setBasketItems(addBundleDiscount([...basketItems, basketItem]));
     }
-    setPriceText("0");
+    setPriceText('0');
     onClose();
   };
 
   return (
-    <Modal
-      open={open && !!registerItem}
-      size="none"
-      onClose={onClose}
-      className="w-1/3"
-    >
+    <Modal open={open && !!registerItem} size="none" onClose={onClose} className="w-1/3">
       <Modal.Header centered={false} onClose={onClose}>
         {`${registerItem?.index}. ${registerItem?.name}`}
       </Modal.Header>

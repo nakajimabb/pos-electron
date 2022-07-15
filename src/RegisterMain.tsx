@@ -325,7 +325,7 @@ const RegisterMain: React.FC = () => {
 
           <Flex className="w-full">
             <div className="w-1/2 mx-4 my-2 h-4 text-xs text-red-500 font-bold">{productError}</div>
-            <Flex justify_content="end" className="w-1/2 pt-">
+            <Flex justify_content="end" className="w-1/2 pt-2">
               {basketItems.length > 0 ? (
                 <Button
                   color="danger"
@@ -469,8 +469,8 @@ const RegisterMain: React.FC = () => {
         <Card className="m-2 w-1/2">
           <Card.Body>
             <p className="mt-1 mr-2 text-sm text-right">
-              {currentShop && `\u00A0 ${nameWithCode(currentShop)} \u00A0`}
-              {!registerClosed && `\u00A0 ${registerStatus?.date.toDate().toLocaleDateString()} \u00A0`}
+              {currentShop && `${nameWithCode(currentShop)} \u00A0`}
+              {!registerClosed && `${registerStatus?.date.toDate().toLocaleDateString()} \u00A0`}
               <Link to="/" onClick={logout} className="underline">
                 ログアウト
               </Link>
