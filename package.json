@@ -107,6 +107,7 @@
     "react-router-dom": "^6.3.0",
     "react-svg": "^15.1.2",
     "react-to-print": "^2.14.7",
+    "realm": "^10.19.5",
     "stream-browserify": "^3.0.0",
     "util": "^0.12.4"
   }

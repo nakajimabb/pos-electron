@@ -8,4 +8,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     let response = await ipcRenderer.invoke('printComponent', url);
     callback(response);
   },
+  findProducts: async (conds: string) => {
+    return await ipcRenderer.invoke('findProducts', conds);
+  },
+  findProductSellingPrices: async (conds: string) => {
+    return await ipcRenderer.invoke('findProductSellingPrices', conds);
+  },
 });

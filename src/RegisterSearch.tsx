@@ -1,28 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  collection,
-  doc,
-  query,
-  getDoc,
-  getDocs,
-  getFirestore,
-  limit,
-  limitToLast,
-  orderBy,
-  startAfter,
-  endBefore,
-  startAt,
-  QueryConstraint,
-  QuerySnapshot,
-  onSnapshot,
-} from 'firebase/firestore';
-import { useAppContext } from './AppContext';
 import { Alert, Button, Card, Flex, Form, Modal, Table } from './components';
 import firebaseError from './firebaseError';
-import { sortedProductCategories } from './tools';
-import { Product, ProductCategory, ProductSellingPrice } from './types';
+import { ProductLocal, ProductSellingPriceLocal } from './realmConfig';
 
-const db = getFirestore();
 const PER_PAGE = 10;
 
 type Props = {
@@ -33,87 +13,47 @@ type Props = {
 };
 
 const RegisterSearch: React.FC<Props> = ({ open, setProductCode, findProduct, onClose }) => {
-  const [search, setSearch] = useState({ text: '', categoryId: '' });
-  const [snapshot, setSnapshot] = useState<QuerySnapshot<Product> | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState({ text: '' });
+  const [products, setProducts] = useState<ProductLocal[]>([]);
   const [page, setPage] = useState(0);
   const [productCount, setProductCount] = useState<number | null>(null);
-  const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [sellingPrices, setSellingPrices] = useState<{
     [code: string]: number;
   }>({});
   const [error, setError] = useState<string>('');
-  const { counters, searchProducts, currentShop } = useAppContext();
 
-  const existSearch = () => search.text.trim() || search.categoryId.trim();
-
-  const queryProducts = (action: 'head' | 'prev' | 'next' | 'current') => async () => {
+  const queryProducts = (action: 'head' | 'prev' | 'next') => async () => {
     try {
       setError('');
       const searchText = search.text.trim();
-      let querySnapshot: QuerySnapshot<Product> | null = null;
+      let conds = '';
       if (searchText) {
-        const pds = await searchProducts(searchText);
-        setSnapshot(null);
-        setProducts(pds);
-        setPage(0);
-        setProductCount(null);
-      } else {
-        const conds: QueryConstraint[] = [];
-        setProductCount(Number(counters?.products.all));
-
-        if (action === 'head') {
-          conds.push(orderBy('code'));
-          conds.push(limit(PER_PAGE));
-          setPage(0);
-        } else if (action === 'next') {
-          if (snapshot) {
-            conds.push(orderBy('code'));
-            const last = snapshot.docs[snapshot.docs.length - 1];
-            conds.push(startAfter(last));
-            conds.push(limit(PER_PAGE));
-            setPage(page + 1);
-          }
-        } else if (action === 'prev') {
-          if (snapshot) {
-            conds.push(orderBy('code', 'asc'));
-            const last = snapshot.docs[0];
-            conds.push(endBefore(last));
-            conds.push(limitToLast(PER_PAGE));
-            setPage(page - 1);
-          }
-        } else if (action === 'current') {
-          if (snapshot) {
-            const first = snapshot.docs[0];
-            conds.push(startAt(first));
-            conds.push(limit(PER_PAGE));
-          }
-        }
-        const q = query(collection(db, 'products'), ...conds);
-        querySnapshot = (await getDocs(q)) as QuerySnapshot<Product>;
-        setSnapshot(querySnapshot);
-        setProducts(querySnapshot.docs.map((item) => item.data()));
+        conds = `name CONTAINS '${searchText}' OR code CONTAINS '${searchText}'`;
       }
-      if (querySnapshot) {
+
+      let nextPage = 0;
+      if (action === 'next') {
+        nextPage = page + 1;
+      } else if (action === 'prev') {
+        nextPage = page - 1;
+      }
+      const productLocals = (await window.electronAPI.findProducts(conds)) as ProductLocal[];
+
+      if (productLocals) {
         const sellingPricesDic: { [code: string]: number } = {};
-        await Promise.all(
-          querySnapshot.docs.map(async (productDoc, i) => {
-            const product = productDoc.data() as Product;
-            if (currentShop) {
-              const sellingPriceref = doc(db, 'shops', currentShop.code, 'productSellingPrices', product.code);
-              const sellingPriceSnap = await getDoc(sellingPriceref);
-              if (sellingPriceSnap.exists()) {
-                const sellingPrice = sellingPriceSnap.data() as ProductSellingPrice;
-                if (sellingPrice.sellingPrice) {
-                  sellingPricesDic[product.code] = Number(sellingPrice.sellingPrice);
-                }
-              }
-            }
-          })
-        );
+        const productSellingPriceLocals = (await window.electronAPI.findProductSellingPrices(
+          ''
+        )) as ProductSellingPriceLocal[];
+        productSellingPriceLocals.forEach((productSellingPrice) => {
+          if (productSellingPrice.sellingPrice) {
+            sellingPricesDic[productSellingPrice.productCode] = Number(productSellingPrice.sellingPrice);
+          }
+        });
         setSellingPrices(sellingPricesDic);
-        setSnapshot(querySnapshot as QuerySnapshot<Product>);
-        setProducts(querySnapshot.docs.map((item) => item.data()));
+        setPage(nextPage);
+        const startAt = nextPage * PER_PAGE;
+        setProducts(productLocals.slice(startAt, startAt + 9));
+        setProductCount(productLocals.length);
       }
     } catch (error) {
       console.log({ error });
@@ -127,21 +67,10 @@ const RegisterSearch: React.FC<Props> = ({ open, setProductCode, findProduct, on
   };
 
   useEffect(() => {
-    setSnapshot(null);
     setProducts([]);
-    setSearch({ text: '', categoryId: '' });
-    const unsubscribe = onSnapshot(collection(db, 'productCategories'), (snapshot) => {
-      const categories = sortedProductCategories(snapshot as QuerySnapshot<ProductCategory>);
-      const options = categories.map(({ id, productCategory }) => ({
-        value: id,
-        label: '　'.repeat(productCategory.level) + productCategory.name,
-      }));
-      options.unshift({ label: '-- カテゴリ --', value: '' });
-      setCategoryOptions(options);
-    });
+    setSearch({ text: '' });
     document.getElementById('searchText')?.focus();
     queryProducts('head')();
-    return () => unsubscribe();
   }, [open]);
 
   return (
@@ -162,25 +91,17 @@ const RegisterSearch: React.FC<Props> = ({ open, setProductCode, findProduct, on
                   value={search.text}
                   onChange={(e) => setSearch({ ...search, text: e.target.value })}
                 />
-                <Form.Select
-                  id="select"
-                  size="md"
-                  className="mr-2 w-40"
-                  value={search.categoryId}
-                  options={categoryOptions}
-                  onChange={(e) => setSearch({ ...search, categoryId: e.target.value })}
-                />
                 <Button variant="outlined" size="sm" className="mr-2" onClick={queryProducts('head')}>
                   検索
                 </Button>
               </Flex>
             </Form>
-            {snapshot && productCount && (
+            {products && productCount > 0 && (
               <Flex>
                 <Button
                   color="light"
                   size="xs"
-                  disabled={!!existSearch() || page <= 0 || !snapshot || snapshot.size === 0}
+                  disabled={page <= 0 || !products || products.length === 0}
                   className="mr-2"
                   onClick={queryProducts('prev')}
                 >
@@ -189,19 +110,14 @@ const RegisterSearch: React.FC<Props> = ({ open, setProductCode, findProduct, on
                 <Button
                   color="light"
                   size="xs"
-                  disabled={
-                    !!existSearch() ||
-                    PER_PAGE * page + snapshot.size >= productCount ||
-                    !snapshot ||
-                    snapshot.size === 0
-                  }
+                  disabled={PER_PAGE * (page + 1) >= productCount || !products || products.length === 0}
                   className="mr-2"
                   onClick={queryProducts('next')}
                 >
                   次へ
                 </Button>
                 <div className="text-xs align-middle p-1.5">
-                  {`${PER_PAGE * page + 1}～${PER_PAGE * page + snapshot.size}`}/{`${productCount}`}
+                  {`${PER_PAGE * page + 1}～${PER_PAGE * page + products.length}`}/{`${productCount}`}
                 </div>
               </Flex>
             )}
