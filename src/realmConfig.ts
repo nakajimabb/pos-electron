@@ -30,7 +30,6 @@ const ProductSchema = {
 const ProductSellingPriceSchema = {
   name: 'ProductSellingPrice',
   properties: {
-    shopCode: 'string',
     productCode: 'string',
     productName: 'string',
     sellingPrice: 'int?',
@@ -42,7 +41,6 @@ const ProductSellingPriceSchema = {
 const SaleSchema = {
   name: 'Sale',
   properties: {
-    _id: 'int',
     receiptNumber: 'int',
     shopCode: 'string',
     createdAt: 'date',
@@ -58,26 +56,37 @@ const SaleSchema = {
     taxNormalTotal: 'int',
     taxReducedTotal: 'int',
     status: 'string',
-    details: 'SaleDetail[]',
   },
-  primaryKey: '_id',
+  primaryKey: 'receiptNumber',
 };
 
 const SaleDetailSchema = {
   name: 'SaleDetail',
   properties: {
-    _id: 'int',
-    salesId: 'string',
+    receiptNumber: 'int',
     index: 'int',
     productCode: 'string',
-    product: 'Product?',
-    division: 'int',
+    productName: 'string',
+    abbr: 'string',
+    kana: 'string',
+    note: 'string',
+    hidden: 'bool',
+    unregistered: 'bool?',
+    sellingPrice: 'int?',
+    costPrice: 'int?',
+    avgCostPrice: 'int?',
+    sellingTaxClass: 'string?',
+    stockTaxClass: 'string?',
+    sellingTax: 'int?',
+    stockTax: 'int?',
+    selfMedication: 'bool',
+    noReturn: 'bool?',
+    division: 'string',
     quantity: 'int',
     discount: 'int',
     outputReceipt: 'bool',
     status: 'string',
   },
-  primaryKey: '_id',
 };
 
 export const RealmConfig = {
@@ -107,7 +116,6 @@ export type ProductLocal = {
 };
 
 export type ProductSellingPriceLocal = {
-  shopCode: string; // 店舗コード
   productCode: string; // JANコード
   productName: string;
   sellingPrice: number | null; // 売価(税抜)
@@ -115,7 +123,6 @@ export type ProductSellingPriceLocal = {
 };
 
 export type SaleLocal = {
-  _id: number;
   receiptNumber: number;
   shopCode: string;
   createdAt: Date;
@@ -134,11 +141,24 @@ export type SaleLocal = {
 };
 
 export type SaleDetailLocal = {
-  _id: number;
-  salesId: string;
+  receiptNumber: number;
   index: number;
   productCode: string;
-  product: ProductLocal;
+  productName: string;
+  abbr: string;
+  kana: string;
+  note: string;
+  hidden: boolean;
+  unregistered: boolean;
+  sellingPrice: number | null;
+  costPrice: number | null;
+  avgCostPrice: number | null;
+  sellingTaxClass: string | null;
+  stockTaxClass: string | null;
+  sellingTax: number | null;
+  stockTax: number | null;
+  selfMedication: boolean;
+  noReturn: boolean;
   division: string;
   quantity: number;
   discount: number;

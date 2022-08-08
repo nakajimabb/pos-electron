@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import { getFirestore, getDocs, collection, query, where, orderBy, limit, QueryConstraint } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { Alert, Button, Card, Flex, Form, Table } from './components';
 import { useAppContext } from './AppContext';
-import { Sale, SaleDetail } from './types';
+import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { prefectureName } from './prefecture';
-import firebaseError from './firebaseError';
 
-const db = getFirestore();
 const MAX_SEARCH = 50;
 
 const ReceiptList: React.FC = () => {
   const { currentShop } = useAppContext();
-  const [sales, setSales] = useState<[string, Sale, string][]>();
-  const [sale, setSale] = useState<Sale>();
-  const [saleDetails, setSaleDetails] = useState<SaleDetail[]>([]);
+  const [sales, setSales] = useState<[number, SaleLocal, string][]>();
+  const [sale, setSale] = useState<SaleLocal>();
+  const [saleDetails, setSaleDetails] = useState<SaleDetailLocal[]>([]);
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
   const [dateTimeTo, setDateTimeTo] = useState<Date>();
   const [error, setError] = useState<string>('');
@@ -26,38 +23,44 @@ const ReceiptList: React.FC = () => {
     if (!currentShop) return;
     try {
       setError('');
-      const conds: QueryConstraint[] = [];
-      conds.push(where('shopCode', '==', currentShop.code));
+      let conds = `shopCode == '${currentShop.code}'`;
+      let args = [];
+      let paramIndex = 0;
       if (dateTimeFrom) {
-        conds.push(where('createdAt', '>=', dateTimeFrom));
+        conds += ` AND createdAt >= $${paramIndex}`;
+        args.push(dateTimeFrom);
+        paramIndex += 1;
       }
       if (dateTimeTo) {
-        conds.push(where('createdAt', '<=', dateTimeTo));
+        conds += ` AND createdAt <= $${paramIndex}`;
+        args.push(dateTimeTo);
       }
-      conds.push(orderBy('createdAt', 'desc'));
-      conds.push(limit(MAX_SEARCH));
-      const q = query(collection(db, 'sales'), ...conds);
-      const querySnapshot = await getDocs(q);
-      const salesData = new Array<[string, Sale, string]>();
+      const saleLocals = (await window.electronAPI.findSales(conds, ...args)) as SaleLocal[];
+      const salesData = new Array<[number, SaleLocal, string]>();
       await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const detailsSnapshot = await getDocs(collection(db, 'sales', doc.id, 'saleDetails'));
+        saleLocals.map(async (sale) => {
+          const saleDetailLocals = (await window.electronAPI.findSaleDetails(
+            `receiptNumber == ${sale.receiptNumber}`
+          )) as SaleDetailLocal[];
           salesData.push([
-            doc.id,
-            doc.data() as Sale,
-            detailsSnapshot.docs
-              .map((detailDoc) => {
-                const detail = detailDoc.data() as SaleDetail;
-                return detail.product.name;
+            sale.receiptNumber,
+            sale,
+            saleDetailLocals
+              .map((detail) => {
+                return detail.productName;
               })
               .join('、'),
           ]);
         })
       );
-      setSales(salesData);
+      if (salesData.length > MAX_SEARCH) {
+        setSales(salesData.slice(0, MAX_SEARCH - 1));
+      } else {
+        setSales(salesData);
+      }
     } catch (error) {
       console.log({ error });
-      setError(firebaseError(error));
+      setError(error);
     }
   }, [currentShop, dateTimeFrom, dateTimeTo]);
 
@@ -145,9 +148,7 @@ const ReceiptList: React.FC = () => {
                       <Table.Row className="hover:bg-gray-300" key={index}>
                         <Table.Cell>{index + 1}</Table.Cell>
                         <Table.Cell>{saleData?.status === 'Return' ? '返品' : ''}</Table.Cell>
-                        <Table.Cell className="truncate">{`${saleData.createdAt
-                          ?.toDate()
-                          .toLocaleDateString()} ${saleData.createdAt?.toDate().toLocaleTimeString()}`}</Table.Cell>
+                        <Table.Cell className="truncate">{`${saleData.createdAt?.toLocaleDateString()} ${saleData.createdAt?.toLocaleTimeString()}`}</Table.Cell>
                         <Table.Cell className="text-right">{saleData.salesTotal?.toLocaleString()}</Table.Cell>
                         <Table.Cell className="text-right">{saleData.detailsCount?.toLocaleString()}</Table.Cell>
                         <Table.Cell className="truncate">{productName}</Table.Cell>
@@ -157,12 +158,10 @@ const ReceiptList: React.FC = () => {
                             size="xs"
                             onClick={async () => {
                               setSale(saleData);
-                              const querySnapshot = await getDocs(collection(db, 'sales', docId, 'saleDetails'));
-                              const details: Array<SaleDetail> = [];
-                              querySnapshot.docs.forEach((doc) => {
-                                details.push(doc.data() as SaleDetail);
-                              });
-                              setSaleDetails(details);
+                              const saleDetailLocals = (await window.electronAPI.findSaleDetails(
+                                `receiptNumber == ${saleData.receiptNumber}`
+                              )) as SaleDetailLocal[];
+                              setSaleDetails(saleDetailLocals);
                               if (handlePrint) handlePrint();
                             }}
                           >
@@ -188,7 +187,7 @@ const ReceiptList: React.FC = () => {
       <div className="hidden">
         <div ref={componentRef} className="p-10">
           <p className="text-right text-sm mt-2">
-            {sale?.createdAt?.toDate().toLocaleDateString()} {sale?.createdAt?.toDate().toLocaleTimeString()}
+            {sale?.createdAt?.toLocaleDateString()} {sale?.createdAt?.toLocaleTimeString()}
           </p>
           <p className="text-right text-sm mt-2">
             {currentShop ? prefectureName(currentShop.prefecture) : ''}
@@ -222,18 +221,18 @@ const ReceiptList: React.FC = () => {
                 ?.map((saleDetail, index) => (
                   <Table.Row key={index}>
                     <Table.Cell>
-                      {saleDetail.product.selfMedication ? '★' : ''}
-                      {saleDetail.product.sellingTax === 8 ? '軽' : ''}
+                      {saleDetail.selfMedication ? '★' : ''}
+                      {saleDetail.sellingTax === 8 ? '軽' : ''}
                     </Table.Cell>
-                    <Table.Cell>{saleDetail.product.name}</Table.Cell>
+                    <Table.Cell>{saleDetail.productName}</Table.Cell>
                     <Table.Cell className="text-right">
-                      {saleDetail.product.code ? saleDetail.quantity : null}
-                    </Table.Cell>
-                    <Table.Cell className="text-right">
-                      {saleDetail.product.code ? `¥${saleDetail.product.sellingPrice?.toLocaleString()}` : null}
+                      {saleDetail.productCode ? saleDetail.quantity : null}
                     </Table.Cell>
                     <Table.Cell className="text-right">
-                      ¥{(Number(saleDetail.product.sellingPrice) * saleDetail.quantity)?.toLocaleString()}
+                      {saleDetail.productCode ? `¥${saleDetail.sellingPrice?.toLocaleString()}` : null}
+                    </Table.Cell>
+                    <Table.Cell className="text-right">
+                      ¥{(Number(saleDetail.sellingPrice) * saleDetail.quantity)?.toLocaleString()}
                     </Table.Cell>
                   </Table.Row>
                 ))}

@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getFirestore, doc, collection, runTransaction, Timestamp } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useReactToPrint } from 'react-to-print';
-import app from './firebase';
 import { Button, Flex, Form, Modal, Table } from './components';
 import { useAppContext } from './AppContext';
-import { Sale, SaleDetail, Stock, BasketItem } from './types';
+import { BasketItem } from './types';
+import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { prefectureName } from './prefecture';
-import { toNumber, OTC_DIVISION } from './tools';
+import { toNumber } from './tools';
 
 type Props = {
   open: boolean;
@@ -19,8 +17,6 @@ type Props = {
   onClose: () => void;
 };
 
-const db = getFirestore();
-
 const RegisterPayment: React.FC<Props> = ({
   open,
   registerMode,
@@ -30,9 +26,9 @@ const RegisterPayment: React.FC<Props> = ({
   setRegisterMode,
   onClose,
 }) => {
-  const { currentShop, productBulks, incrementStock } = useAppContext();
+  const { currentShop } = useAppContext();
   const [cashText, setCashText] = useState<string>('0');
-  const [currentTimestamp, setCurrentTimestamp] = useState<Timestamp>(Timestamp.fromDate(new Date()));
+  const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date());
   const componentRef = useRef(null);
   const registerSign = registerMode === 'Return' ? -1 : 1;
   const pageStyle = `
@@ -43,60 +39,63 @@ const RegisterPayment: React.FC<Props> = ({
 
   const save = async () => {
     if (!currentShop) return;
-    runTransaction(db, async (transaction) => {
-      const functions = getFunctions(app, 'asia-northeast1');
-      const result = await httpsCallable(functions, 'getSequence')({ docId: 'sales' });
-      const receiptNumber = Number(result.data);
-      const sale: Sale = {
-        receiptNumber,
-        shopCode: currentShop.code,
-        createdAt: currentTimestamp,
-        detailsCount: basketItems.filter((item) => !!item.product.code).length,
-        salesTotal: salesExceptHidden,
-        taxTotal:
-          exclusiveTaxNormalTotal + inclusiveTaxNormalTotal + exclusiveTaxReducedTotal + inclusiveTaxReducedTotal,
-        discountTotal: 0,
-        paymentType,
-        cashAmount: toNumber(cashText),
-        salesTaxFreeTotal: priceTaxFreeTotal,
-        salesNormalTotal: priceNormalTotal + exclusiveTaxNormalTotal,
-        salesReducedTotal: priceReducedTotal + exclusiveTaxReducedTotal,
-        taxNormalTotal: exclusiveTaxNormalTotal + inclusiveTaxNormalTotal,
-        taxReducedTotal: exclusiveTaxReducedTotal + inclusiveTaxReducedTotal,
+    const receiptNumber = await window.electronAPI.getReceiptNumber();
+    const sale: SaleLocal = {
+      receiptNumber,
+      shopCode: currentShop.code,
+      createdAt: new Date(),
+      detailsCount: basketItems.filter((item) => !!item.product.code).length,
+      salesTotal: salesExceptHidden,
+      taxTotal: exclusiveTaxNormalTotal + inclusiveTaxNormalTotal + exclusiveTaxReducedTotal + inclusiveTaxReducedTotal,
+      discountTotal: 0,
+      paymentType,
+      cashAmount: toNumber(cashText),
+      salesTaxFreeTotal: priceTaxFreeTotal,
+      salesNormalTotal: priceNormalTotal + exclusiveTaxNormalTotal,
+      salesReducedTotal: priceReducedTotal + exclusiveTaxReducedTotal,
+      taxNormalTotal: exclusiveTaxNormalTotal + inclusiveTaxNormalTotal,
+      taxReducedTotal: exclusiveTaxReducedTotal + inclusiveTaxReducedTotal,
+      status: registerMode,
+    };
+
+    let discountTotal = 0;
+    const details: SaleDetailLocal[] = [];
+    basketItems.forEach((item, index) => {
+      const detail: SaleDetailLocal = {
+        receiptNumber: sale.receiptNumber,
+        index: index,
+        productCode: item.product.code,
+        productName: item.product.name ?? '',
+        abbr: item.product.abbr ?? '',
+        kana: item.product.kana ?? '',
+        note: item.product.note ?? '',
+        hidden: item.product.hidden ?? false,
+        unregistered: item.product.unregistered ?? false,
+        sellingPrice: item.product.sellingPrice ?? 0,
+        costPrice: item.product.costPrice ?? 0,
+        avgCostPrice: item.product.avgCostPrice ?? 0,
+        sellingTaxClass: item.product.sellingTaxClass ?? null,
+        stockTaxClass: item.product.stockTaxClass ?? null,
+        sellingTax: item.product.sellingTax ?? null,
+        stockTax: item.product.stockTax ?? null,
+        selfMedication: item.product.selfMedication ?? false,
+        noReturn: item.product.noReturn ?? false,
+        division: item.division,
+        quantity: item.quantity,
+        discount: 0,
+        outputReceipt: item.outputReceipt,
         status: registerMode,
       };
-      const saleRef = doc(collection(db, 'sales'));
-      transaction.set(saleRef, sale);
+      details.push(detail);
 
-      let discountTotal = 0;
-      basketItems.forEach((item, index) => {
-        const detail: SaleDetail = {
-          salesId: saleRef.id,
-          index: index,
-          productCode: item.product.code,
-          product: item.product,
-          division: item.division,
-          quantity: item.quantity,
-          discount: 0,
-          outputReceipt: item.outputReceipt,
-          status: registerMode,
-        };
-        const detailRef = doc(collection(db, 'sales', saleRef.id, 'saleDetails'), index.toString());
-        transaction.set(detailRef, detail);
-        if (!item.product.code && item.product.sellingPrice) {
-          const prevDetailRef = doc(collection(db, 'sales', saleRef.id, 'saleDetails'), (index - 1).toString());
-          transaction.update(prevDetailRef, {
-            discount: -item.product.sellingPrice,
-          });
-          discountTotal += -item.product.sellingPrice;
-        }
-        if (item.product.code && item.division === OTC_DIVISION) {
-          const incr = -item.quantity * registerSign;
-          incrementStock(currentShop.code, item.product.code, item.product.name, incr, transaction);
-        }
-      });
-      transaction.update(saleRef, { discountTotal });
+      if (!item.product.code && item.product.sellingPrice) {
+        const prevDetail = details[index - 1];
+        prevDetail.discount = -item.product.sellingPrice;
+        discountTotal += -item.product.sellingPrice;
+      }
+      sale.discountTotal = discountTotal;
     });
+    await window.electronAPI.createSaleWithDetails(sale, details);
   };
 
   const handlePrint = useReactToPrint({
@@ -232,7 +231,7 @@ const RegisterPayment: React.FC<Props> = ({
     } else {
       setCashText(salesTotal.toString());
     }
-    setCurrentTimestamp(Timestamp.fromDate(new Date()));
+    setCurrentDateTime(new Date());
     const inputCash = document.getElementById('inputCash') as HTMLInputElement;
     inputCash?.focus();
     inputCash?.select();
@@ -300,7 +299,7 @@ const RegisterPayment: React.FC<Props> = ({
         <div className="hidden">
           <div ref={componentRef} className="p-10">
             <p className="text-right text-sm mt-2">
-              {currentTimestamp.toDate().toLocaleDateString()} {currentTimestamp.toDate().toLocaleTimeString()}
+              {currentDateTime.toLocaleDateString()} {currentDateTime.toLocaleTimeString()}
             </p>
             <p className="text-right text-sm mt-2">
               {currentShop ? prefectureName(currentShop.prefecture) : ''}

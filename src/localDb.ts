@@ -6,7 +6,7 @@ import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import Realm from 'realm';
 import { RealmConfig } from './realmConfig';
 import { Product, ProductSellingPrice } from './types';
-import { ProductLocal, ProductSellingPriceLocal } from './realmConfig';
+import { ProductLocal, ProductSellingPriceLocal, SaleLocal, SaleDetailLocal } from './realmConfig';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
@@ -61,7 +61,6 @@ export const updateLocalDb = async () => {
       realm.create<ProductSellingPriceLocal>(
         'ProductSellingPrice',
         {
-          shopCode: '9999',
           productCode: productSellingPrice.productCode,
           productName: productSellingPrice.productName,
           sellingPrice: productSellingPrice.sellingPrice,
@@ -115,7 +114,6 @@ ipcMain.handle('findProductSellingPrices', (event, conds) => {
   }
   result = productSellingPrices.map((productSellingPrice) => {
     return {
-      shopCode: productSellingPrice.shopCode,
       productCode: productSellingPrice.productCode,
       productName: productSellingPrice.productName,
       sellingPrice: productSellingPrice.sellingPrice,
@@ -123,4 +121,129 @@ ipcMain.handle('findProductSellingPrices', (event, conds) => {
     };
   });
   return result;
+});
+
+ipcMain.handle('getReceiptNumber', (event) => {
+  let sales = realm.objects<SaleLocal>('Sale').sorted('receiptNumber', true);
+  if (sales.length > 0) {
+    return sales[0].receiptNumber + 1;
+  } else {
+    return 1;
+  }
+});
+
+ipcMain.handle('findSales', (event, conds, ...args) => {
+  console.log(conds);
+  console.log(args);
+  let result: any[] = [];
+  let sales = realm.objects<SaleLocal>('Sale');
+  if (conds) {
+    sales = sales.filtered(conds, ...args);
+  }
+  result = sales.map((sale) => {
+    return {
+      receiptNumber: sale.receiptNumber,
+      shopCode: sale.shopCode,
+      createdAt: sale.createdAt,
+      detailsCount: sale.detailsCount,
+      salesTotal: sale.salesTotal,
+      taxTotal: sale.taxTotal,
+      discountTotal: sale.discountTotal,
+      paymentType: sale.paymentType,
+      cashAmount: sale.cashAmount,
+      salesTaxFreeTotal: sale.salesTaxFreeTotal,
+      salesNormalTotal: sale.salesNormalTotal,
+      salesReducedTotal: sale.salesReducedTotal,
+      taxNormalTotal: sale.taxNormalTotal,
+      taxReducedTotal: sale.taxReducedTotal,
+      status: sale.status,
+    };
+  });
+  return result;
+});
+
+ipcMain.handle('findSaleDetails', (event, conds) => {
+  let result: any[] = [];
+  let saleDetails = realm.objects<SaleDetailLocal>('SaleDetail');
+  if (conds) {
+    saleDetails = saleDetails.filtered(conds);
+  }
+  result = saleDetails.map((saleDetail) => {
+    return {
+      receiptNumber: saleDetail.receiptNumber,
+      index: saleDetail.index,
+      productCode: saleDetail.productCode,
+      productName: saleDetail.productName,
+      abbr: saleDetail.abbr,
+      kana: saleDetail.kana,
+      note: saleDetail.note,
+      hidden: saleDetail.hidden,
+      unregistered: saleDetail.unregistered,
+      sellingPrice: saleDetail.sellingPrice,
+      costPrice: saleDetail.costPrice,
+      avgCostPrice: saleDetail.avgCostPrice,
+      sellingTaxClass: saleDetail.sellingTaxClass,
+      stockTaxClass: saleDetail.stockTaxClass,
+      sellingTax: saleDetail.sellingTax,
+      stockTax: saleDetail.stockTax,
+      selfMedication: saleDetail.selfMedication,
+      noReturn: saleDetail.noReturn,
+      division: saleDetail.division,
+      quantity: saleDetail.quantity,
+      discount: saleDetail.discount,
+      outputReceipt: saleDetail.outputReceipt,
+      status: saleDetail.status,
+    };
+  });
+  return result;
+});
+
+ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
+  realm.write(() => {
+    realm.create<SaleLocal>('Sale', {
+      receiptNumber: sale.receiptNumber,
+      shopCode: sale.shopCode,
+      createdAt: sale.createdAt,
+      detailsCount: sale.detailsCount,
+      salesTotal: sale.salesTotal,
+      taxTotal: sale.taxTotal,
+      discountTotal: sale.discountTotal,
+      paymentType: sale.paymentType,
+      cashAmount: sale.cashAmount,
+      salesTaxFreeTotal: sale.salesTaxFreeTotal,
+      salesNormalTotal: sale.salesNormalTotal,
+      salesReducedTotal: sale.salesReducedTotal,
+      taxNormalTotal: sale.taxNormalTotal,
+      taxReducedTotal: sale.taxReducedTotal,
+      status: sale.status,
+    });
+
+    saleDetails.forEach((saleDetail: SaleDetailLocal) => {
+      realm.create<SaleDetailLocal>('SaleDetail', {
+        receiptNumber: saleDetail.receiptNumber,
+        index: saleDetail.index,
+        productCode: saleDetail.productCode,
+        productName: saleDetail.productName,
+        abbr: saleDetail.abbr,
+        kana: saleDetail.kana,
+        note: saleDetail.note,
+        hidden: saleDetail.hidden,
+        unregistered: saleDetail.unregistered,
+        sellingPrice: saleDetail.sellingPrice,
+        costPrice: saleDetail.costPrice,
+        avgCostPrice: saleDetail.avgCostPrice,
+        sellingTaxClass: saleDetail.sellingTaxClass,
+        stockTaxClass: saleDetail.stockTaxClass,
+        sellingTax: saleDetail.sellingTax,
+        stockTax: saleDetail.stockTax,
+        selfMedication: saleDetail.selfMedication,
+        noReturn: saleDetail.noReturn,
+        division: saleDetail.division,
+        quantity: saleDetail.quantity,
+        discount: saleDetail.discount,
+        outputReceipt: saleDetail.outputReceipt,
+        status: saleDetail.status,
+      });
+    });
+  });
 });
