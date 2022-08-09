@@ -1,25 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import app from './firebase';
-import {
-  doc,
-  getDocs,
-  collection,
-  query,
-  orderBy,
-  limit,
-  getFirestore,
-  Timestamp,
-  updateDoc,
-} from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { Button, Card, Flex, Form, Progress } from './components';
 import { useAppContext } from './AppContext';
-import { RegisterStatus } from './types';
-import { nameWithCode, toDateString } from './tools';
-
-const db = getFirestore();
+import { nameWithCode } from './tools';
 
 const RegisterClose: React.FC = () => {
   const { currentShop } = useAppContext();
@@ -28,15 +14,9 @@ const RegisterClose: React.FC = () => {
   const [closeDate, setCloseDate] = useState<Date>(new Date());
 
   const getRegisterStatus = useCallback(async () => {
-    if (currentShop) {
-      const statusRef = collection(db, 'shops', currentShop.code, 'status');
-      const statusSnap = await getDocs(query(statusRef, orderBy('openedAt', 'desc'), limit(1)));
-      if (statusSnap.size > 0) {
-        statusSnap.docs.map(async (doc) => {
-          const status = doc.data() as RegisterStatus;
-          setCloseDate(status.date.toDate());
-        });
-      }
+    const status = await window.electronAPI.getRegisterStatus();
+    if (status) {
+      setCloseDate(parse(status.dateString, 'yyyyMMdd', new Date()));
     }
   }, [currentShop]);
 
@@ -46,17 +26,20 @@ const RegisterClose: React.FC = () => {
       setLoading(true);
       if (currentShop) {
         setInterval(() => setProgress((prev) => (prev + 1) % 100), 10);
-        const statusRef = doc(db, 'shops', currentShop.code, 'status', format(closeDate, 'yyyyMMdd'));
-        await updateDoc(statusRef, { closedAt: Timestamp.fromDate(new Date()) });
-        const functions = getFunctions(app, 'asia-northeast1');
-        const result = await httpsCallable(
-          functions,
-          'sendDailyClosingData'
-        )({ code: currentShop.code, date: format(closeDate, 'yyyy/MM/dd') });
-        console.log({ result });
+        const status = await window.electronAPI.getRegisterStatus(format(closeDate, 'yyyyMMdd'));
+        if (status) {
+          status.closedAt = new Date();
+          await window.electronAPI.setRegisterStatus(status);
+        }
+        // const functions = getFunctions(app, 'asia-northeast1');
+        // const result = await httpsCallable(
+        //   functions,
+        //   'sendDailyClosingData'
+        // )({ code: currentShop.code, date: format(closeDate, 'yyyy/MM/dd') });
+        // console.log({ result });
       }
       setLoading(false);
-      window.location.href = '/daily_cash_report';
+      window.location.href = '#/daily_cash_report';
     } catch (error) {
       console.log({ error });
       setLoading(false);
@@ -76,7 +59,7 @@ const RegisterClose: React.FC = () => {
           <div className="flex justify-center">
             <Form className="my-4">
               <Form.Date
-                value={closeDate ? toDateString(closeDate, 'YYYY-MM-DD') : ''}
+                value={closeDate ? format(closeDate, 'yyyy-MM-dd') : ''}
                 disabled={true}
                 onChange={(e) => {
                   if (e.target.value) {

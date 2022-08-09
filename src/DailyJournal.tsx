@@ -1,79 +1,65 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import {
-  getFirestore,
-  getDocs,
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-  QueryConstraint,
-} from 'firebase/firestore';
 import { startOfToday, startOfTomorrow } from 'date-fns';
 import { Button, Flex, Table } from './components';
 import { useAppContext } from './AppContext';
-import { Sale, SaleDetail, RegisterStatus } from './types';
-
-const db = getFirestore();
+import { SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
 
 const DailyJournal: React.FC = () => {
   const { currentShop } = useAppContext();
   const [completed, setCompleted] = useState<boolean>(false);
-  const [sales, setSales] = useState<[string, Sale, SaleDetail[]][]>();
-  const [registerStatus, setRegisterStatus] = useState<RegisterStatus>();
+  const [sales, setSales] = useState<[number, SaleLocal, SaleDetailLocal[]][]>();
+  const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const componentRef = useRef(null);
-  const [reportTimestamp, setReportTimestamp] = useState<Timestamp>(Timestamp.fromDate(new Date()));
+  const [reportDateTime, setReportDateTime] = useState<Date>(new Date());
 
   const getRegisterStatus = useCallback(async () => {
-    if (currentShop) {
-      const statusRef = collection(db, 'shops', currentShop.code, 'status');
-      const statusSnap = await getDocs(query(statusRef, orderBy('openedAt', 'desc'), limit(1)));
-      if (statusSnap.size > 0) {
-        statusSnap.docs.map(async (doc) => {
-          const status = doc.data() as RegisterStatus;
-          if (status.closedAt) {
-            setReportTimestamp(status.closedAt);
-          }
-          setRegisterStatus(status);
-        });
+    const status = await window.electronAPI.getRegisterStatus();
+    if (status) {
+      if (status.closedAt) {
+        setReportDateTime(status.closedAt);
       }
+      setRegisterStatus(status);
     }
-  }, [currentShop, setReportTimestamp, setRegisterStatus]);
+  }, [currentShop, setReportDateTime, setRegisterStatus]);
 
   const querySales = useCallback(async () => {
     if (completed) return;
     if (!currentShop) return;
     try {
-      const conds: QueryConstraint[] = [];
-      conds.push(where('shopCode', '==', currentShop.code));
+      let conds = `shopCode == '${currentShop.code}'`;
+      let args = [];
+      let paramIndex = 0;
+
       if (registerStatus) {
-        conds.push(where('createdAt', '>=', registerStatus.openedAt.toDate()));
+        conds += ` AND createdAt >= $${paramIndex}`;
+        args.push(registerStatus.openedAt);
+        paramIndex += 1;
         if (registerStatus.closedAt) {
-          conds.push(where('createdAt', '<', registerStatus.closedAt.toDate()));
+          conds += ` AND createdAt < $${paramIndex}`;
+          args.push(registerStatus.closedAt);
+          paramIndex += 1;
         }
       } else {
-        conds.push(where('createdAt', '>=', startOfToday()));
-        conds.push(where('createdAt', '<', startOfTomorrow()));
+        conds += ` AND createdAt >= $${paramIndex}`;
+        args.push(startOfToday());
+        paramIndex += 1;
+        conds += ` AND createdAt < $${paramIndex}`;
+        args.push(startOfTomorrow());
+        paramIndex += 1;
       }
-      conds.push(orderBy('createdAt', 'desc'));
-      const q = query(collection(db, 'sales'), ...conds);
-      const querySnapshot = await getDocs(q);
-      const salesData = new Array<[string, Sale, SaleDetail[]]>();
+      const saleLocals = (await window.electronAPI.findSales(conds, ...args)) as SaleLocal[];
+      saleLocals.sort((saleA, saleB) => {
+        return saleA.createdAt > saleB.createdAt ? 1 : -1;
+      });
+      const salesData = new Array<[number, SaleLocal, SaleDetailLocal[]]>();
       await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const detailsSnapshot = await getDocs(
-            query(collection(db, 'sales', doc.id, 'saleDetails'), orderBy('index'))
-          );
-          salesData.push([
-            doc.id,
-            doc.data() as Sale,
-            detailsSnapshot.docs.map((detailDoc) => {
-              return detailDoc.data() as SaleDetail;
-            }),
-          ]);
+        saleLocals.map(async (sale) => {
+          const saleDetailLocals = (await window.electronAPI.findSaleDetails(
+            `receiptNumber == ${sale.receiptNumber}`
+          )) as SaleDetailLocal[];
+          salesData.push([sale.receiptNumber, sale, saleDetailLocals]);
         })
       );
       setSales(salesData);
@@ -116,8 +102,7 @@ const DailyJournal: React.FC = () => {
       <div className="w-1/2 overflow-y-scroll border border-solid" style={{ height: '40rem' }}>
         <div ref={componentRef} className="p-10">
           <p className="text-right text-xs mb-4">
-            {currentShop?.formalName}　{reportTimestamp.toDate().toLocaleDateString()}{' '}
-            {reportTimestamp.toDate().toLocaleTimeString()}
+            {currentShop?.formalName}　{reportDateTime.toLocaleDateString()} {reportDateTime.toLocaleTimeString()}
           </p>
 
           {sales &&
@@ -127,7 +112,7 @@ const DailyJournal: React.FC = () => {
               const rows = [
                 <Table.Row className="hover:bg-yellow-500" key={docId}>
                   <Table.Cell className="w-2/12">{saleData.status === 'Return' ? '返品' : '売上'}</Table.Cell>
-                  <Table.Cell className="w-4/12">{saleData.createdAt.toDate().toLocaleTimeString()}</Table.Cell>
+                  <Table.Cell className="w-4/12">{saleData.createdAt.toLocaleTimeString()}</Table.Cell>
                   <Table.Cell className="w-2/12 text-right"></Table.Cell>
                   <Table.Cell className="w-2/12 text-right"></Table.Cell>
                   <Table.Cell className="w-2/12 text-right"></Table.Cell>
@@ -139,31 +124,30 @@ const DailyJournal: React.FC = () => {
               let reducedTotal = 0;
 
               saleDetails?.forEach((saleDetail, index) => {
-                priceTotal += Number(saleDetail.product.sellingPrice) * saleDetail.quantity;
-                if (saleDetail.product.sellingTaxClass === 'exclusive') {
-                  if (saleDetail.product.sellingTax) {
-                    if (saleDetail.product.sellingTax === 10) {
-                      normalTotal += Number(saleDetail.product.sellingPrice) * saleDetail.quantity;
-                    } else if (saleDetail.product.sellingTax === 8) {
-                      reducedTotal += Number(saleDetail.product.sellingPrice) * saleDetail.quantity;
+                priceTotal += Number(saleDetail.sellingPrice) * saleDetail.quantity;
+                if (saleDetail.sellingTaxClass === 'exclusive') {
+                  if (saleDetail.sellingTax) {
+                    if (saleDetail.sellingTax === 10) {
+                      normalTotal += Number(saleDetail.sellingPrice) * saleDetail.quantity;
+                    } else if (saleDetail.sellingTax === 8) {
+                      reducedTotal += Number(saleDetail.sellingPrice) * saleDetail.quantity;
                     }
                   }
                 }
                 rows.push(
                   <Table.Row className="hover:bg-yellow-500" key={`${docId}${index}`}>
                     <Table.Cell></Table.Cell>
-                    <Table.Cell>{saleDetail.product.name}</Table.Cell>
+                    <Table.Cell>{saleDetail.productName}</Table.Cell>
                     <Table.Cell className="text-right">
-                      {saleDetail.product.code ? saleDetail.quantity : null}
+                      {saleDetail.productCode ? saleDetail.quantity : null}
                     </Table.Cell>
                     <Table.Cell className="text-right">
-                      {saleDetail.product.code
-                        ? `¥${(Number(saleDetail.product.sellingPrice) * registerSign)?.toLocaleString()}`
+                      {saleDetail.productCode
+                        ? `¥${(Number(saleDetail.sellingPrice) * registerSign)?.toLocaleString()}`
                         : null}
                     </Table.Cell>
                     <Table.Cell className="text-right">
-                      ¥
-                      {(Number(saleDetail.product.sellingPrice) * saleDetail.quantity * registerSign)?.toLocaleString()}
+                      ¥{(Number(saleDetail.sellingPrice) * saleDetail.quantity * registerSign)?.toLocaleString()}
                     </Table.Cell>
                   </Table.Row>
                 );

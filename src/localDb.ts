@@ -6,7 +6,7 @@ import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import Realm from 'realm';
 import { RealmConfig } from './realmConfig';
 import { Product, ProductSellingPrice } from './types';
-import { ProductLocal, ProductSellingPriceLocal, SaleLocal, SaleDetailLocal } from './realmConfig';
+import { ProductLocal, ProductSellingPriceLocal, SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
@@ -245,5 +245,38 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
         status: saleDetail.status,
       });
     });
+  });
+});
+
+ipcMain.handle('getRegisterStatus', (event, dateString) => {
+  let status = realm.objects<RegisterStatusLocal>('RegisterStatus');
+  if (dateString) {
+    status = status.filtered(`dateString == '${dateString}'`);
+  } else {
+    status = status.sorted('openedAt', true);
+  }
+  if (status.length > 0) {
+    return {
+      dateString: status[0].dateString,
+      openedAt: status[0].openedAt,
+      closedAt: status[0].closedAt,
+    };
+  } else {
+    return null;
+  }
+});
+
+ipcMain.handle('setRegisterStatus', (event, status: RegisterStatusLocal) => {
+  console.log(status);
+  realm.write(() => {
+    realm.create<RegisterStatusLocal>(
+      'RegisterStatus',
+      {
+        dateString: status.dateString,
+        openedAt: status.openedAt,
+        closedAt: status.closedAt,
+      },
+      Realm.UpdateMode.Modified
+    );
   });
 });

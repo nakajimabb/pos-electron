@@ -89,9 +89,19 @@ const SaleDetailSchema = {
   },
 };
 
+const RegisterStatusSchema = {
+  name: 'RegisterStatus',
+  properties: {
+    dateString: 'string',
+    openedAt: 'date',
+    closedAt: 'date?',
+  },
+  primaryKey: 'dateString',
+};
+
 export const RealmConfig = {
   path: `./pos.realm`,
-  schema: [ProductSchema, ProductSellingPriceSchema, SaleSchema, SaleDetailSchema],
+  schema: [ProductSchema, ProductSellingPriceSchema, SaleSchema, SaleDetailSchema, RegisterStatusSchema],
 };
 
 export type ProductLocal = {
@@ -164,4 +174,10 @@ export type SaleDetailLocal = {
   discount: number;
   outputReceipt: boolean;
   status: 'Sales' | 'Cancel' | 'Return';
+};
+
+export type RegisterStatusLocal = {
+  dateString: string;
+  openedAt: Date;
+  closedAt: Date | null;
 };

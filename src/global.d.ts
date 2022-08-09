@@ -7,5 +7,7 @@ interface Window {
     findSaleDetails: (conds: string) => Promise<any>;
     getReceiptNumber: () => Promise<number>;
     createSaleWithDetails: (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => Promise<void>;
+    getRegisterStatus: (dateString?: string) => Promise<any>;
+    setRegisterStatus: (status: RegisterStatusLocal) => Promise<void>;
   };
 }

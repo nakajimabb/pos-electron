@@ -1,7 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
-import { SaleDetailLocal, SaleLocal } from './realmConfig';
+import { RegisterStatusLocal, SaleDetailLocal, SaleLocal } from './realmConfig';
 
 const { contextBridge, ipcRenderer } = require('electron');
 
@@ -27,5 +27,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   createSaleWithDetails: async (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => {
     await ipcRenderer.invoke('createSaleWithDetails', sale, saleDetails);
+  },
+  getRegisterStatus: async (dateString?: string) => {
+    return await ipcRenderer.invoke('getRegisterStatus', dateString);
+  },
+  setRegisterStatus: async (status: RegisterStatusLocal) => {
+    return await ipcRenderer.invoke('setRegisterStatus', status);
   },
 });

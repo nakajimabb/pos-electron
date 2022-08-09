@@ -1,67 +1,57 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import {
-  getFirestore,
-  getDocs,
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-  QueryConstraint,
-} from 'firebase/firestore';
 import { startOfToday, startOfTomorrow } from 'date-fns';
 import { Button, Flex, Table } from './components';
 import { useAppContext } from './AppContext';
-import { Sale, SaleDetail, RegisterStatus } from './types';
+import { SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
 import { Divisions } from './tools';
-
-const db = getFirestore();
 
 const DailyCashReport: React.FC = () => {
   const { currentShop } = useAppContext();
   const [completed, setCompleted] = useState<boolean>(false);
   const [reportItems, setReportItems] = useState<{ [code: string]: number }>({});
-  const [registerStatus, setRegisterStatus] = useState<RegisterStatus>();
+  const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const componentRef = useRef(null);
-  const [reportTimestamp, setReportTimestamp] = useState<Timestamp>(Timestamp.fromDate(new Date()));
+  const [reportDateTime, setReportDateTime] = useState<Date>(new Date());
 
   const getRegisterStatus = useCallback(async () => {
-    if (currentShop) {
-      const statusRef = collection(db, 'shops', currentShop.code, 'status');
-      const statusSnap = await getDocs(query(statusRef, orderBy('openedAt', 'desc'), limit(1)));
-      if (statusSnap.size > 0) {
-        statusSnap.docs.map(async (doc) => {
-          const status = doc.data() as RegisterStatus;
-          if (status.closedAt) {
-            setReportTimestamp(status.closedAt);
-          }
-          setRegisterStatus(status);
-        });
+    const status = await window.electronAPI.getRegisterStatus();
+    if (status) {
+      if (status.closedAt) {
+        setReportDateTime(status.closedAt);
       }
+      setRegisterStatus(status);
     }
-  }, [currentShop, setReportTimestamp, setRegisterStatus]);
+  }, [currentShop, setReportDateTime, setRegisterStatus]);
 
   const querySales = useCallback(async () => {
     if (completed) return;
     if (!currentShop) return;
     try {
-      const conds: QueryConstraint[] = [];
-      conds.push(where('shopCode', '==', currentShop.code));
+      let conds = `shopCode == '${currentShop.code}'`;
+      let args = [];
+      let paramIndex = 0;
+
       if (registerStatus) {
-        conds.push(where('createdAt', '>=', registerStatus.openedAt.toDate()));
+        conds += ` AND createdAt >= $${paramIndex}`;
+        args.push(registerStatus.openedAt);
+        paramIndex += 1;
         if (registerStatus.closedAt) {
-          conds.push(where('createdAt', '<', registerStatus.closedAt.toDate()));
+          conds += ` AND createdAt < $${paramIndex}`;
+          args.push(registerStatus.closedAt);
+          paramIndex += 1;
         }
       } else {
-        conds.push(where('createdAt', '>=', startOfToday()));
-        conds.push(where('createdAt', '<', startOfTomorrow()));
+        conds += ` AND createdAt >= $${paramIndex}`;
+        args.push(startOfToday());
+        paramIndex += 1;
+        conds += ` AND createdAt < $${paramIndex}`;
+        args.push(startOfTomorrow());
+        paramIndex += 1;
       }
-      conds.push(orderBy('createdAt', 'desc'));
-      const q = query(collection(db, 'sales'), ...conds);
-      const querySnapshot = await getDocs(q);
+      const saleLocals = (await window.electronAPI.findSales(conds, ...args)) as SaleLocal[];
+
       const reportItemsData: { [code: string]: number } = {};
       reportItemsData['detailsCountTotal'] = 0;
       reportItemsData['detailsAmountTotal'] = 0;
@@ -100,9 +90,7 @@ const DailyCashReport: React.FC = () => {
       reportItemsData[`divisionAllDiscountAmountTotal`] = 0;
 
       await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const sale = doc.data() as Sale;
-
+        saleLocals.map(async (sale) => {
           const registerSign = sale.status === 'Return' ? -1 : 1;
 
           let exclusivePriceNormalTotal = 0;
@@ -128,10 +116,12 @@ const DailyCashReport: React.FC = () => {
             reportItemsData['discountAmountTotal'] += sale.discountTotal;
           }
 
-          const detailsSnapshot = await getDocs(collection(db, 'sales', doc.id, 'saleDetails'));
-          detailsSnapshot.docs.forEach((detailDoc) => {
-            const detail = detailDoc.data() as SaleDetail;
-            const amount = Number(detail.product.sellingPrice) * detail.quantity * registerSign;
+          const saleDetailLocals = (await window.electronAPI.findSaleDetails(
+            `receiptNumber == ${sale.receiptNumber}`
+          )) as SaleDetailLocal[];
+
+          saleDetailLocals.forEach((detail) => {
+            const amount = Number(detail.sellingPrice) * detail.quantity * registerSign;
             reportItemsData['customerAmountTotal'] += amount;
             if (sale.paymentType === 'Cash') {
               reportItemsData['cashAmountTotal'] += amount;
@@ -145,16 +135,16 @@ const DailyCashReport: React.FC = () => {
               reportItemsData[`division${detail.division}DiscountCountTotal`] += 1;
               reportItemsData[`division${detail.division}DiscountAmountTotal`] += detail.discount * -1 * registerSign;
             }
-            if (detail.product.sellingTaxClass === 'exclusive') {
-              if (detail.product.sellingTax === 10) {
+            if (detail.sellingTaxClass === 'exclusive') {
+              if (detail.sellingTax === 10) {
                 exclusivePriceNormalTotal += amount;
-              } else if (detail.product.sellingTax === 8) {
+              } else if (detail.sellingTax === 8) {
                 exclusivePriceReducedTotal += amount;
               }
-            } else if (detail.product.sellingTaxClass === 'inclusive') {
-              if (detail.product.sellingTax === 10) {
+            } else if (detail.sellingTaxClass === 'inclusive') {
+              if (detail.sellingTax === 10) {
                 inclusivePriceNormalTotal += amount;
-              } else if (detail.product.sellingTax === 8) {
+              } else if (detail.sellingTax === 8) {
                 inclusivePriceReducedTotal += amount;
               }
             } else {
@@ -249,8 +239,7 @@ const DailyCashReport: React.FC = () => {
       <div className="w-1/2 overflow-y-scroll border border-solid" style={{ height: '40rem' }}>
         <div ref={componentRef} className="p-10">
           <p className="text-right text-xs mb-4">
-            {currentShop?.formalName}　{reportTimestamp.toDate().toLocaleDateString()}{' '}
-            {reportTimestamp.toDate().toLocaleTimeString()}
+            {currentShop?.formalName}　{reportDateTime.toLocaleDateString()} {reportDateTime.toLocaleTimeString()}
           </p>
           {completed && (
             <Flex>

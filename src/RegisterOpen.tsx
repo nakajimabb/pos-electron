@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, updateDoc, getFirestore, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { Alert, Button, Card, Flex, Form } from './components';
-import firebaseError from './firebaseError';
-import { useAppContext } from './AppContext';
-import { RegisterStatus } from './types';
-import { nameWithCode, toDateString } from './tools';
 
-const db = getFirestore();
+import { useAppContext } from './AppContext';
+import { nameWithCode, toDateString } from './tools';
 
 const RegisterOpen: React.FC = () => {
   const { currentShop } = useAppContext();
@@ -19,25 +15,27 @@ const RegisterOpen: React.FC = () => {
     e.preventDefault();
     setError('');
     try {
-      if (currentShop) {
-        const statusRef = doc(db, 'shops', currentShop.code, 'status', format(openDate, 'yyyyMMdd'));
-        const statusSnap = await getDoc(statusRef);
-        if (statusSnap.exists()) {
-          const status = statusSnap.data() as RegisterStatus;
-          if (status.openedAt.toDate().toLocaleDateString() === openDate.toLocaleDateString() && status.closedAt) {
-            if (openDate.toLocaleDateString() === new Date().toLocaleDateString()) {
-              await updateDoc(statusRef, { closedAt: null });
-            } else {
-              throw Error('すでに精算済みです。');
-            }
+      const status = await window.electronAPI.getRegisterStatus();
+      console.log(status);
+      if (status) {
+        if (status.openedAt.toLocaleDateString() === openDate.toLocaleDateString() && status.closedAt) {
+          if (openDate.toLocaleDateString() === new Date().toLocaleDateString()) {
+            status.closedAt = null;
+            await window.electronAPI.setRegisterStatus(status);
+          } else {
+            throw Error('すでに精算済みです。');
           }
-        } else {
-          await setDoc(statusRef, { date: openDate, openedAt: Timestamp.fromDate(new Date()), closedAt: null });
         }
+      } else {
+        await window.electronAPI.setRegisterStatus({
+          dateString: format(openDate, 'yyyyMMdd'),
+          openedAt: new Date(),
+          closedAt: null,
+        });
       }
-      window.location.href = '/';
+      window.location.href = '/main_window';
     } catch (error) {
-      setError(firebaseError(error));
+      setError(error);
     }
   };
 
@@ -55,7 +53,7 @@ const RegisterOpen: React.FC = () => {
           <div className="flex justify-center">
             <Form className="my-4">
               <Form.Date
-                value={openDate ? toDateString(openDate, 'YYYY-MM-DD') : ''}
+                value={openDate ? format(openDate, 'yyyy-MM-dd') : ''}
                 onChange={(e) => {
                   if (e.target.value) {
                     setOpenDate(new Date(e.target.value));

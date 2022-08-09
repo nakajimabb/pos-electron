@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, getDocs, collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { format, parse } from 'date-fns';
 import { Button, Card, Flex, Form, Grid, Icon, Table, Tooltip } from './components';
 import { Brand } from './components/type';
 import { useAppContext } from './AppContext';
@@ -11,6 +12,7 @@ import RegisterModify from './RegisterModify';
 import RegisterSearch from './RegisterSearch';
 import { Product, ProductSellingPrice, BasketItem, RegisterItem, RegisterStatus, ShortcutItem } from './types';
 import { OTC_DIVISION, nameWithCode, toAscii } from './tools';
+import { RegisterStatusLocal } from './realmConfig';
 
 const db = getFirestore();
 
@@ -36,7 +38,7 @@ const RegisterMain: React.FC = () => {
   const [registerMode, setRegisterMode] = useState<'Sales' | 'Return'>('Sales');
   const [paymentType, setPaymentType] = useState<'Cash' | 'Credit'>('Cash');
   const [registerClosed, setRegisterClosed] = useState<boolean>(false);
-  const [registerStatus, setRegisterStatus] = useState<RegisterStatus>();
+  const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
   const logout = () => {
@@ -147,20 +149,14 @@ const RegisterMain: React.FC = () => {
     exclusiveTaxTotal;
 
   const getRegisterStatus = useCallback(async () => {
-    if (currentShop) {
-      const statusRef = collection(db, 'shops', currentShop.code, 'status');
-      const statusSnap = await getDocs(query(statusRef, orderBy('openedAt', 'desc'), limit(1)));
-      if (statusSnap.size > 0) {
-        statusSnap.docs.map(async (doc) => {
-          const status = doc.data() as RegisterStatus;
-          setRegisterStatus(status);
-          setRegisterClosed(!!status.closedAt);
-        });
-      } else {
-        setRegisterClosed(true);
-      }
+    const status = await window.electronAPI.getRegisterStatus();
+    if (status) {
+      setRegisterStatus(status);
+      setRegisterClosed(!!status.closedAt);
+    } else {
+      setRegisterClosed(true);
     }
-  }, [currentShop]);
+  }, []);
 
   useEffect(() => {
     if (!currentShop) return;
@@ -470,7 +466,8 @@ const RegisterMain: React.FC = () => {
           <Card.Body>
             <p className="mt-1 mr-2 text-sm text-right">
               {currentShop && `${nameWithCode(currentShop)} \u00A0`}
-              {!registerClosed && `${registerStatus?.date.toDate().toLocaleDateString()} \u00A0`}
+              {!registerClosed &&
+                `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
               <Link to="/" onClick={logout} className="underline">
                 ログアウト
               </Link>
