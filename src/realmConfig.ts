@@ -99,9 +99,82 @@ const RegisterStatusSchema = {
   primaryKey: 'dateString',
 };
 
+const RegisterItemSchema = {
+  name: 'RegisterItem',
+  properties: {
+    index: 'int',
+    code: 'string',
+    name: 'string',
+    division: 'string',
+    defaultPrice: 'int',
+    outputReceipt: 'bool',
+    sortOrder: 'int',
+    taxClass: 'string?',
+    tax: 'int?',
+  },
+  primaryKey: 'index',
+};
+
+const ShortcutItemSchema = {
+  name: 'ShortcutItem',
+  properties: {
+    index: 'int',
+    color: 'string',
+    productCode: 'string',
+  },
+  primaryKey: 'index',
+};
+
+const ProductBundleSchema = {
+  name: 'ProductBundle',
+  properties: {
+    code: 'string',
+    name: 'string',
+    sellingTaxClass: 'string?',
+    sellingTax: 'int?',
+    quantity: 'int',
+    discount: 'int',
+    productCodes: 'string[]',
+  },
+  primaryKey: 'code',
+};
+
+const ProductBulkSchema = {
+  name: 'ProductBulk',
+  properties: {
+    parentProductCode: 'string',
+    parentProductName: 'string',
+    childProductCode: 'string',
+    childProductName: 'string',
+    quantity: 'int',
+  },
+  primaryKey: 'parentProductCode',
+};
+
+const FixedCostRateSchema = {
+  name: 'FixedCostRate',
+  properties: {
+    productCode: 'string',
+    description: 'string',
+    rate: 'int',
+  },
+  primaryKey: 'productCode',
+};
+
 export const RealmConfig = {
   path: `./pos.realm`,
-  schema: [ProductSchema, ProductSellingPriceSchema, SaleSchema, SaleDetailSchema, RegisterStatusSchema],
+  schema: [
+    ProductSchema,
+    ProductSellingPriceSchema,
+    SaleSchema,
+    SaleDetailSchema,
+    RegisterStatusSchema,
+    RegisterItemSchema,
+    ShortcutItemSchema,
+    ProductBundleSchema,
+    ProductBulkSchema,
+    FixedCostRateSchema,
+  ],
 };
 
 export type ProductLocal = {
@@ -180,4 +253,46 @@ export type RegisterStatusLocal = {
   dateString: string;
   openedAt: Date;
   closedAt: Date | null;
+};
+
+export type RegisterItemLocal = {
+  index: number;
+  code: string;
+  name: string;
+  division: string;
+  defaultPrice: number;
+  outputReceipt: boolean;
+  sortOrder: number;
+  taxClass: string | null;
+  tax: number | null;
+};
+
+export type ShortcutItemLocal = {
+  index: number;
+  color: string;
+  productCode: string;
+};
+
+export type ProductBundleLocal = {
+  code: string;
+  name: string;
+  sellingTaxClass: string | null; // 税区分
+  sellingTax: number | null; // 消費税
+  quantity: number;
+  discount: number;
+  productCodes: string[];
+};
+
+export type ProductBulkLocal = {
+  parentProductCode: string;
+  parentProductName: string;
+  childProductCode: string;
+  childProductName: string;
+  quantity: number;
+};
+
+export type FixedCostRateLocal = {
+  productCode: string;
+  description: string;
+  rate: number;
 };

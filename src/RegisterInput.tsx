@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Modal, Table } from './components';
 import { useAppContext } from './AppContext';
-import { BasketItem, RegisterItem } from './types';
+import { BasketItem } from './types';
+import { RegisterItemLocal } from './realmConfig';
 import { toNumber } from './tools';
 
 type Props = {
   open: boolean;
-  registerItem: RegisterItem | undefined;
+  registerItem: RegisterItemLocal | undefined;
   basketItems: BasketItem[];
   setBasketItems: React.Dispatch<React.SetStateAction<BasketItem[]>>;
   onClose: () => void;

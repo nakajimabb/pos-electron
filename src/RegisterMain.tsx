@@ -1,26 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDoc, getDocs, collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import { format, parse } from 'date-fns';
-import { Button, Card, Flex, Form, Grid, Icon, Table, Tooltip } from './components';
+import { parse } from 'date-fns';
+import { Button, Card, Flex, Form, Grid, Icon, Table } from './components';
 import { Brand } from './components/type';
 import { useAppContext } from './AppContext';
 import RegisterPayment from './RegisterPayment';
 import RegisterInput from './RegisterInput';
 import RegisterModify from './RegisterModify';
 import RegisterSearch from './RegisterSearch';
-import { Product, ProductSellingPrice, BasketItem, RegisterItem, RegisterStatus, ShortcutItem } from './types';
+import { BasketItem } from './types';
 import { OTC_DIVISION, nameWithCode, toAscii } from './tools';
-import { RegisterStatusLocal } from './realmConfig';
-
-const db = getFirestore();
+import { ProductLocal, RegisterItemLocal, RegisterStatusLocal, ShortcutItemLocal } from './realmConfig';
 
 const RegisterMain: React.FC = () => {
   type Shortcut = {
     index: number;
     color: string;
-    product: Product;
+    product: ProductLocal;
   };
 
   const { currentShop, addBundleDiscount } = useAppContext();
@@ -28,8 +25,8 @@ const RegisterMain: React.FC = () => {
   const [productError, setProductError] = useState<string>('');
   const [basketItemIndex, setBasketItemIndex] = useState<number>(0);
   const [basketItems, setBasketItems] = useState<BasketItem[]>([]);
-  const [registerItem, setRegisterItem] = useState<RegisterItem>();
-  const [registerItems, setRegisterItems] = useState<RegisterItem[]>([]);
+  const [registerItem, setRegisterItem] = useState<RegisterItemLocal>();
+  const [registerItems, setRegisterItems] = useState<RegisterItemLocal[]>([]);
   const [shortcuts, setShortcuts] = useState<(Shortcut | null)[]>([]);
   const [openPayment, setOpenPayment] = useState<boolean>(false);
   const [openInput, setOpenInput] = useState<boolean>(false);
@@ -59,17 +56,11 @@ const RegisterMain: React.FC = () => {
   const findProduct = async (code: string) => {
     try {
       setProductError('');
-      const docRef = doc(db, 'products', code);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const product = docSnap.data() as Product;
-        if (currentShop) {
-          const sellingPriceref = doc(db, 'shops', currentShop.code, 'productSellingPrices', code);
-          const sellingPriceSnap = await getDoc(sellingPriceref);
-          if (sellingPriceSnap.exists()) {
-            const sellingPrice = sellingPriceSnap.data() as ProductSellingPrice;
-            product.sellingPrice = sellingPrice.sellingPrice;
-          }
+      const product = await window.electronAPI.findProductByPk(code);
+      if (product) {
+        const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
+        if (sellingPrice) {
+          product.sellingPrice = sellingPrice.sellingPrice;
         }
         const existingIndex = basketItems.findIndex((item) => item.product.code === code);
         if (existingIndex >= 0) {
@@ -158,65 +149,47 @@ const RegisterMain: React.FC = () => {
     }
   }, []);
 
+  const getRegisterItems = useCallback(async () => {
+    const items = (await window.electronAPI.findRegisterItems()) as RegisterItemLocal[];
+    setRegisterItems(items);
+  }, []);
+
+  const getShortcutItems = useCallback(async () => {
+    const items = (await window.electronAPI.findShortcutItems()) as ShortcutItemLocal[];
+    const shortcutArray = new Array<Shortcut | null>(20);
+    const shortcutItemArray = new Array<ShortcutItemLocal>();
+    shortcutArray.fill(null);
+    items.forEach((item) => {
+      shortcutItemArray.push(item);
+    });
+    await Promise.all(
+      shortcutItemArray.map(async (item) => {
+        if (item.productCode) {
+          const product = await window.electronAPI.findProductByPk(item.productCode);
+          if (product) {
+            const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(item.productCode);
+            if (sellingPrice) {
+              product.sellingPrice = sellingPrice.sellingPrice;
+            }
+            shortcutArray[item.index] = {
+              index: item.index,
+              color: item.color,
+              product,
+            };
+          }
+        }
+      })
+    );
+    setShortcuts(shortcutArray);
+  }, []);
+
   useEffect(() => {
     if (!currentShop) return;
-    const unsubRegisterItems = onSnapshot(
-      query(collection(db, 'registerItems'), orderBy('sortOrder')),
-      async (snapshot) => {
-        const items = new Array<RegisterItem>();
-        snapshot.forEach((doc) => {
-          items.push(doc.data() as RegisterItem);
-        });
-        setRegisterItems(items);
-      }
-    );
-
-    const unsubShortcutItems = onSnapshot(
-      collection(db, 'shops', currentShop.code, 'shortcutItems'),
-      async (snapshot) => {
-        const shortcutArray = new Array<Shortcut | null>(20);
-        const shortcutItemArray = new Array<ShortcutItem>();
-        shortcutArray.fill(null);
-        snapshot.forEach((doc) => {
-          const item = doc.data() as ShortcutItem;
-          shortcutItemArray.push(item);
-        });
-        await Promise.all(
-          shortcutItemArray.map(async (item) => {
-            if (item.productRef) {
-              const productSnap = await getDoc(item.productRef);
-              if (productSnap.exists()) {
-                const product = productSnap.data() as Product;
-                if (currentShop) {
-                  const sellingPriceref = doc(db, 'shops', currentShop.code, 'productSellingPrices', product.code);
-                  const sellingPriceSnap = await getDoc(sellingPriceref);
-                  if (sellingPriceSnap.exists()) {
-                    const sellingPrice = sellingPriceSnap.data() as ProductSellingPrice;
-                    product.sellingPrice = sellingPrice.sellingPrice;
-                  }
-                }
-                shortcutArray[item.index] = {
-                  index: item.index,
-                  color: item.color,
-                  product,
-                };
-              }
-            }
-          })
-        );
-        setShortcuts(shortcutArray);
-      }
-    );
-
-    document.getElementById('productCode')?.focus();
-
     getRegisterStatus();
-
-    return () => {
-      unsubRegisterItems();
-      unsubShortcutItems();
-    };
-  }, [currentShop, getRegisterStatus]);
+    getRegisterItems();
+    getShortcutItems();
+    document.getElementById('productCode')?.focus();
+  }, [currentShop, getRegisterStatus, getRegisterItems, getShortcutItems]);
 
   return (
     <div className="flex w-full h-screen">
@@ -543,7 +516,7 @@ const RegisterMain: React.FC = () => {
                         );
                         if (existingIndex >= 0) {
                           basketItems[existingIndex].quantity += 1;
-                          setBasketItems(addBundleDiscount(basketItems));
+                          setBasketItems(addBundleDiscount([...basketItems]));
                         } else {
                           const basketItem = {
                             product: shortcut.product,

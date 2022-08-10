@@ -1,31 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from './components/ThemeProvider';
 import { Link } from 'react-router-dom';
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  collection,
-  setDoc,
-  deleteDoc,
-  DocumentReference,
-  DocumentData,
-  onSnapshot,
-} from 'firebase/firestore';
 import { Button, Card, Flex, Form, Grid, Table } from './components';
 import { Brand, Brands } from './components/type';
 import { useAppContext } from './AppContext';
-import { Product, ProductSellingPrice, ShortcutItem } from './types';
+import { ProductLocal, ShortcutItemLocal } from './realmConfig';
 import { toAscii } from './tools';
 import RegisterSearch from './RegisterSearch';
-
-const db = getFirestore();
 
 const ShortcutEdit: React.FC = () => {
   type Shortcut = {
     index: number;
-    productRef: DocumentReference<Product>;
-    product: Product;
+    product: ProductLocal;
     color: Brand;
   };
 
@@ -33,8 +19,7 @@ const ShortcutEdit: React.FC = () => {
   const [itemIndex, setItemIndex] = useState<number | null>();
   const [itemColor, setItemColor] = useState<Brand | null>('info');
   const [productCode, setProductCode] = useState<string>('');
-  const [productRef, setProductRef] = useState<DocumentReference<DocumentData> | null>(null);
-  const [product, setProduct] = useState<Product | null>();
+  const [product, setProduct] = useState<ProductLocal | null>();
   const [shortcuts, setShortcuts] = useState<(Shortcut | null)[]>([]);
   const [openSearch, setOpenSearch] = useState<boolean>(false);
 
@@ -42,20 +27,13 @@ const ShortcutEdit: React.FC = () => {
 
   const findProduct = async (code: string) => {
     try {
-      const docRef = doc(db, 'products', code);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setProductRef(docRef as DocumentReference<DocumentData>);
-        if (currentShop) {
-          const product = docSnap.data() as Product;
-          const sellingPriceref = doc(db, 'shops', currentShop.code, 'productSellingPrices', code);
-          const sellingPriceSnap = await getDoc(sellingPriceref);
-          if (sellingPriceSnap.exists()) {
-            const sellingPrice = sellingPriceSnap.data() as ProductSellingPrice;
-            product.sellingPrice = sellingPrice.sellingPrice;
-          }
-          setProduct(product);
+      const product = await window.electronAPI.findProductByPk(code);
+      if (product) {
+        const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
+        if (sellingPrice) {
+          product.sellingPrice = sellingPrice.sellingPrice;
         }
+        setProduct(product);
       } else {
         console.log('no such product');
       }
@@ -76,10 +54,9 @@ const ShortcutEdit: React.FC = () => {
     if (!currentShop) return;
     try {
       if (itemIndex != null) {
-        const item = { color: itemColor, index: itemIndex, productRef };
-        await setDoc(doc(db, 'shops', currentShop.code, 'shortcutItems', itemIndex.toString()), item);
+        const item = { color: itemColor, index: itemIndex, productCode };
+        await window.electronAPI.setShortcutItem(item);
         setProduct(null);
-        setProductRef(null);
         setProductCode('');
         setItemIndex(null);
       }
@@ -93,9 +70,8 @@ const ShortcutEdit: React.FC = () => {
     if (!currentShop) return;
     try {
       if (itemIndex != null) {
-        await deleteDoc(doc(db, 'shops', currentShop.code, 'shortcutItems', itemIndex.toString()));
+        await window.electronAPI.deleteShortcutItem(itemIndex);
         setProduct(null);
-        setProductRef(null);
         setProductCode('');
         setItemIndex(null);
       }
@@ -104,47 +80,39 @@ const ShortcutEdit: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (!currentShop) return;
-    const unsubShortcutItems = onSnapshot(
-      collection(db, 'shops', currentShop.code, 'shortcutItems'),
-      async (snapshot) => {
-        const shortcutArray = new Array<Shortcut | null>(20);
-        const shortcutItemArray = new Array<ShortcutItem>();
-        shortcutArray.fill(null);
-        snapshot.forEach((doc) => {
-          const item = doc.data() as ShortcutItem;
-          shortcutItemArray.push(item);
-        });
-        for (let item of shortcutItemArray) {
-          if (item.productRef) {
-            const productSnap = await getDoc(item.productRef);
-            if (productSnap.exists()) {
-              const product = productSnap.data() as Product;
-              if (currentShop) {
-                const sellingPriceref = doc(db, 'shops', currentShop.code, 'productSellingPrices', product.code);
-                const sellingPriceSnap = await getDoc(sellingPriceref);
-                if (sellingPriceSnap.exists()) {
-                  const sellingPrice = sellingPriceSnap.data() as ProductSellingPrice;
-                  product.sellingPrice = sellingPrice.sellingPrice;
-                }
-              }
-              shortcutArray[item.index] = {
-                index: item.index,
-                color: item.color as Brand,
-                productRef: item.productRef,
-                product,
-              };
+  const getShortcutItems = useCallback(async () => {
+    const items = (await window.electronAPI.findShortcutItems()) as ShortcutItemLocal[];
+    const shortcutArray = new Array<Shortcut | null>(20);
+    const shortcutItemArray = new Array<ShortcutItemLocal>();
+    shortcutArray.fill(null);
+    items.forEach((item) => {
+      shortcutItemArray.push(item);
+    });
+    await Promise.all(
+      shortcutItemArray.map(async (item) => {
+        if (item.productCode) {
+          const product = await window.electronAPI.findProductByPk(item.productCode);
+          if (product) {
+            const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(item.productCode);
+            if (sellingPrice) {
+              product.sellingPrice = sellingPrice.sellingPrice;
             }
+            shortcutArray[item.index] = {
+              index: item.index,
+              color: item.color as Brand,
+              product,
+            };
           }
         }
-        setShortcuts(shortcutArray);
-      }
+      })
     );
+    setShortcuts(shortcutArray);
+  }, []);
 
+  useEffect(() => {
+    if (!currentShop) return;
+    getShortcutItems();
     document.getElementById('productCode')?.focus();
-
-    return () => unsubShortcutItems();
   }, [itemIndex, currentShop]);
 
   return (
@@ -184,12 +152,10 @@ const ShortcutEdit: React.FC = () => {
                           setItemColor(shortcut.color);
                           setProductCode(shortcut.product.code);
                           setProduct(shortcut.product);
-                          setProductRef(shortcut.productRef);
                         } else {
                           setItemColor('info');
                           setProductCode('');
                           setProduct(null);
-                          setProductRef(null);
                         }
                       }}
                       key={index}

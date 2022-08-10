@@ -1,4 +1,5 @@
 import { DocumentReference, Timestamp } from 'firebase/firestore';
+import { ProductLocal } from './realmConfig';
 import { toDateString } from './tools';
 
 export const CLASS_DELIV = '01';
@@ -93,7 +94,7 @@ export type RegisterItem = {
 };
 
 export type BasketItem = {
-  product: Product;
+  product: ProductLocal;
   division: string;
   outputReceipt: boolean;
   quantity: number;
