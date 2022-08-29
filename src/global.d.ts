@@ -1,6 +1,7 @@
 interface Window {
   electronAPI: {
     printComponent: (url: string, callback: (response: any) => any) => Promise<void>;
+    updateLocalDb: (shopCode: string) => Promise<void>;
     findProductByPk: (code: string) => Promise<any>;
     findProducts: (conds?: string) => Promise<any>;
     findProductSellingPriceByPk: (code: string) => Promise<any>;

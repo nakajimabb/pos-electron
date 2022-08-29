@@ -33,7 +33,10 @@ const RegisterOpen: React.FC = () => {
           closedAt: null,
         });
       }
-      window.location.href = '/main_window';
+      await window.electronAPI.updateLocalDb(currentShop.code);
+      setTimeout(() => {
+        window.location.href = '/main_window';
+      }, 1500);
     } catch (error) {
       setError(error);
     }

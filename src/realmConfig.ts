@@ -20,6 +20,7 @@ const ProductSchema = {
     sellingTax: 'int?',
     stockTax: 'int?',
     selfMedication: 'bool',
+    supplierCode: 'string?',
     noReturn: 'bool?',
     createdAt: 'date?',
     updatedAt: 'date?',
@@ -193,6 +194,7 @@ export type ProductLocal = {
   sellingTax: number | null;
   stockTax: number | null;
   selfMedication: boolean;
+  supplierCode: string | null;
   noReturn: boolean; // 返品不可
   createdAt: Date | null;
   updatedAt: Date | null;

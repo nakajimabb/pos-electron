@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     let response = await ipcRenderer.invoke('printComponent', url);
     callback(response);
   },
+  updateLocalDb: async (shopCode: string) => {
+    return await ipcRenderer.invoke('updateLocalDb', shopCode);
+  },
   findProductByPk: async (code: string) => {
     return await ipcRenderer.invoke('findProductByPk', code);
   },
