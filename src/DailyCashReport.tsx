@@ -117,7 +117,7 @@ const DailyCashReport: React.FC = () => {
           }
 
           const saleDetailLocals = (await window.electronAPI.findSaleDetails(
-            `receiptNumber == ${sale.receiptNumber}`
+            `saleId == '${sale.id}'`
           )) as SaleDetailLocal[];
 
           saleDetailLocals.forEach((detail) => {

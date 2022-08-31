@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateLocalDb: async (shopCode: string) => {
     return await ipcRenderer.invoke('updateLocalDb', shopCode);
   },
+  syncFirestore: async (shopCode: string) => {
+    return await ipcRenderer.invoke('syncFirestore', shopCode);
+  },
   findProductByPk: async (code: string) => {
     return await ipcRenderer.invoke('findProductByPk', code);
   },
@@ -66,5 +69,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   findFixedCostRates: async (conds?: string) => {
     return await ipcRenderer.invoke('findFixedCostRates', conds);
+  },
+  findShopByPk: async (shopCode: string) => {
+    return await ipcRenderer.invoke('findShopByPk', shopCode);
+  },
+  findSyncDateTimeByPk: async (shopCode: string) => {
+    return await ipcRenderer.invoke('findSyncDateTimeByPk', shopCode);
   },
 });

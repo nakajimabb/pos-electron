@@ -11,7 +11,7 @@ const MAX_SEARCH = 50;
 
 const ReceiptList: React.FC = () => {
   const { currentShop } = useAppContext();
-  const [sales, setSales] = useState<[number, SaleLocal, string][]>();
+  const [sales, setSales] = useState<[string, SaleLocal, string][]>();
   const [sale, setSale] = useState<SaleLocal>();
   const [saleDetails, setSaleDetails] = useState<SaleDetailLocal[]>([]);
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
@@ -36,14 +36,14 @@ const ReceiptList: React.FC = () => {
         args.push(dateTimeTo);
       }
       const saleLocals = (await window.electronAPI.findSales(conds, ...args)) as SaleLocal[];
-      const salesData = new Array<[number, SaleLocal, string]>();
+      const salesData = new Array<[string, SaleLocal, string]>();
       await Promise.all(
         saleLocals.map(async (sale) => {
           const saleDetailLocals = (await window.electronAPI.findSaleDetails(
-            `receiptNumber == ${sale.receiptNumber}`
+            `saleId == '${sale.id}'`
           )) as SaleDetailLocal[];
           salesData.push([
-            sale.receiptNumber,
+            sale.id,
             sale,
             saleDetailLocals
               .map((detail) => {
@@ -159,7 +159,7 @@ const ReceiptList: React.FC = () => {
                             onClick={async () => {
                               setSale(saleData);
                               const saleDetailLocals = (await window.electronAPI.findSaleDetails(
-                                `receiptNumber == ${saleData.receiptNumber}`
+                                `saleId == '${saleData.id}'`
                               )) as SaleDetailLocal[];
                               setSaleDetails(saleDetailLocals);
                               if (handlePrint) handlePrint();

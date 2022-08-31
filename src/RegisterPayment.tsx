@@ -5,7 +5,7 @@ import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { prefectureName } from './prefecture';
-import { toNumber } from './tools';
+import { createId, toNumber } from './tools';
 
 type Props = {
   open: boolean;
@@ -39,8 +39,10 @@ const RegisterPayment: React.FC<Props> = ({
 
   const save = async () => {
     if (!currentShop) return;
-    const receiptNumber = await window.electronAPI.getReceiptNumber();
+    const newId = createId();
+    const receiptNumber = new Date().getTime();
     const sale: SaleLocal = {
+      id: newId,
       receiptNumber,
       shopCode: currentShop.code,
       createdAt: new Date(),
@@ -62,7 +64,7 @@ const RegisterPayment: React.FC<Props> = ({
     const details: SaleDetailLocal[] = [];
     basketItems.forEach((item, index) => {
       const detail: SaleDetailLocal = {
-        receiptNumber: sale.receiptNumber,
+        saleId: newId,
         index: index,
         productCode: item.product.code,
         productName: item.product.name ?? '',
@@ -79,6 +81,7 @@ const RegisterPayment: React.FC<Props> = ({
         sellingTax: item.product.sellingTax ?? null,
         stockTax: item.product.stockTax ?? null,
         selfMedication: item.product.selfMedication ?? false,
+        supplierCode: item.product.supplierCode,
         noReturn: item.product.noReturn ?? false,
         division: item.division,
         quantity: item.quantity,
@@ -96,6 +99,7 @@ const RegisterPayment: React.FC<Props> = ({
       sale.discountTotal = discountTotal;
     });
     await window.electronAPI.createSaleWithDetails(sale, details);
+    await window.electronAPI.syncFirestore(currentShop.code);
   };
 
   const handlePrint = useReactToPrint({

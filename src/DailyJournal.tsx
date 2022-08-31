@@ -9,7 +9,7 @@ import { SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
 const DailyJournal: React.FC = () => {
   const { currentShop } = useAppContext();
   const [completed, setCompleted] = useState<boolean>(false);
-  const [sales, setSales] = useState<[number, SaleLocal, SaleDetailLocal[]][]>();
+  const [sales, setSales] = useState<[string, SaleLocal, SaleDetailLocal[]][]>();
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const componentRef = useRef(null);
   const [reportDateTime, setReportDateTime] = useState<Date>(new Date());
@@ -53,13 +53,13 @@ const DailyJournal: React.FC = () => {
       saleLocals.sort((saleA, saleB) => {
         return saleA.createdAt > saleB.createdAt ? 1 : -1;
       });
-      const salesData = new Array<[number, SaleLocal, SaleDetailLocal[]]>();
+      const salesData = new Array<[string, SaleLocal, SaleDetailLocal[]]>();
       await Promise.all(
         saleLocals.map(async (sale) => {
           const saleDetailLocals = (await window.electronAPI.findSaleDetails(
-            `receiptNumber == ${sale.receiptNumber}`
+            `saleId == '${sale.id}'`
           )) as SaleDetailLocal[];
-          salesData.push([sale.receiptNumber, sale, saleDetailLocals]);
+          salesData.push([sale.id, sale, saleDetailLocals]);
         })
       );
       setSales(salesData);

@@ -42,6 +42,7 @@ const ProductSellingPriceSchema = {
 const SaleSchema = {
   name: 'Sale',
   properties: {
+    id: 'string',
     receiptNumber: 'int',
     shopCode: 'string',
     createdAt: 'date',
@@ -58,13 +59,13 @@ const SaleSchema = {
     taxReducedTotal: 'int',
     status: 'string',
   },
-  primaryKey: 'receiptNumber',
+  primaryKey: 'id',
 };
 
 const SaleDetailSchema = {
   name: 'SaleDetail',
   properties: {
-    receiptNumber: 'int',
+    saleId: 'string',
     index: 'int',
     productCode: 'string',
     productName: 'string',
@@ -81,6 +82,7 @@ const SaleDetailSchema = {
     sellingTax: 'int?',
     stockTax: 'int?',
     selfMedication: 'bool',
+    supplierCode: 'string?',
     noReturn: 'bool?',
     division: 'string',
     quantity: 'int',
@@ -162,6 +164,38 @@ const FixedCostRateSchema = {
   primaryKey: 'productCode',
 };
 
+const ShopSchema = {
+  name: 'Shop',
+  properties: {
+    code: 'string',
+    name: 'string',
+    kana: 'string',
+    formalName: 'string',
+    formalKana: 'string',
+    hidden: 'bool',
+    email: 'string',
+    zip: 'string',
+    prefecture: 'int',
+    municipality: 'string',
+    houseNumber: 'string',
+    buildingName: 'string',
+    tel: 'string',
+    fax: 'string',
+    orderable: 'bool?',
+    role: 'string',
+  },
+  primaryKey: 'code',
+};
+
+const SyncDateTimeSchema = {
+  name: 'SyncDateTime',
+  properties: {
+    shopCode: 'string',
+    updatedAt: 'date?',
+  },
+  primaryKey: 'shopCode',
+};
+
 export const RealmConfig = {
   path: `./pos.realm`,
   schema: [
@@ -175,6 +209,8 @@ export const RealmConfig = {
     ProductBundleSchema,
     ProductBulkSchema,
     FixedCostRateSchema,
+    ShopSchema,
+    SyncDateTimeSchema,
   ],
 };
 
@@ -208,6 +244,7 @@ export type ProductSellingPriceLocal = {
 };
 
 export type SaleLocal = {
+  id: string;
   receiptNumber: number;
   shopCode: string;
   createdAt: Date;
@@ -226,7 +263,7 @@ export type SaleLocal = {
 };
 
 export type SaleDetailLocal = {
-  receiptNumber: number;
+  saleId: string;
   index: number;
   productCode: string;
   productName: string;
@@ -243,6 +280,7 @@ export type SaleDetailLocal = {
   sellingTax: number | null;
   stockTax: number | null;
   selfMedication: boolean;
+  supplierCode: string | null;
   noReturn: boolean;
   division: string;
   quantity: number;
@@ -297,4 +335,9 @@ export type FixedCostRateLocal = {
   productCode: string;
   description: string;
   rate: number;
+};
+
+export type SyncDateTime = {
+  shopCode: string;
+  updatedAt: Date | null;
 };

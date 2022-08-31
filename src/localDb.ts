@@ -1,7 +1,23 @@
 import { initializeApp } from 'firebase/app';
+import { startOfDay } from 'date-fns';
 import { firebaseConfig } from './firebaseConfig';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, getDocs, getFirestore, query, orderBy, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  getFirestore,
+  query,
+  orderBy,
+  getDoc,
+  runTransaction,
+  doc,
+  Timestamp,
+  DocumentReference,
+  QueryConstraint,
+  where,
+  increment,
+  serverTimestamp,
+} from 'firebase/firestore';
 import Realm from 'realm';
 import {
   Product,
@@ -11,6 +27,12 @@ import {
   RegisterItem,
   ShortcutItem,
   FixedCostRate,
+  Sale,
+  SaleDetail,
+  TaxClass,
+  Supplier,
+  Shop,
+  stockPath,
 } from './types';
 import {
   ProductLocal,
@@ -21,7 +43,11 @@ import {
   RealmConfig,
   RegisterItemLocal,
   ShortcutItemLocal,
+  SaleLocal,
+  SaleDetailLocal,
+  SyncDateTime,
 } from './realmConfig';
+import { OTC_DIVISION } from './tools';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
@@ -184,6 +210,222 @@ export const updateLocalDb = async (shopCode: string) => {
           productCode: fixedCostRate.productCode,
           description: fixedCostRate.description,
           rate: fixedCostRate.rate,
+        },
+        Realm.UpdateMode.Modified
+      );
+    });
+  });
+
+  const docSnapshot = await getDoc(doc(db, 'shops', shopCode));
+  realm.write(() => {
+    const shop = docSnapshot.data() as Shop;
+    realm.create<Shop>(
+      'Shop',
+      {
+        code: shop.code,
+        name: shop.name,
+        kana: shop.kana,
+        formalName: shop.formalName,
+        formalKana: shop.formalKana,
+        hidden: shop.hidden,
+        email: shop.email,
+        zip: shop.zip,
+        prefecture: shop.prefecture,
+        municipality: shop.municipality,
+        houseNumber: shop.houseNumber,
+        buildingName: shop.buildingName,
+        tel: shop.tel,
+        fax: shop.fax,
+        orderable: shop.orderable ?? false,
+        role: shop.role ?? 'shop',
+      },
+      Realm.UpdateMode.Modified
+    );
+  });
+};
+
+export const syncFirestore = async (shopCode: string) => {
+  const auth = getAuth(firebaseApp);
+  const email = shopCode + MAIL_DOMAIN;
+  await signInWithEmailAndPassword(auth, email, 'password');
+  console.log('syncFirestore');
+  runTransaction(db, async (transaction) => {
+    console.log('runTransaction');
+    let dateTime = new Date();
+    const syncDateTime = realm.objectForPrimaryKey<SyncDateTime>('SyncDateTime', shopCode);
+    if (syncDateTime && syncDateTime.updatedAt) {
+      dateTime = syncDateTime.updatedAt;
+    }
+    const syncStartAt = startOfDay(new Date());
+    const conds: QueryConstraint[] = [];
+    conds.push(where('shopCode', '==', shopCode));
+    conds.push(where('createdAt', '>=', dateTime));
+    conds.push(orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'sales'), ...conds);
+    const querySnapshot = await getDocs(q);
+    console.log('querySnapshot');
+    const realmConds = `shopCode == '${shopCode}' AND createdAt >= $0`;
+    const saleLocals = realm.objects<SaleLocal>('Sale').filtered(realmConds, dateTime);
+    console.log(saleLocals.length);
+    await Promise.all(
+      saleLocals.map(async (saleLocal) => {
+        const sale: Sale = {
+          receiptNumber: saleLocal.receiptNumber,
+          shopCode: saleLocal.shopCode,
+          createdAt: Timestamp.fromDate(saleLocal.createdAt),
+          detailsCount: saleLocal.detailsCount,
+          salesTotal: saleLocal.salesTotal,
+          taxTotal: saleLocal.taxTotal,
+          discountTotal: saleLocal.discountTotal,
+          paymentType: saleLocal.paymentType,
+          cashAmount: saleLocal.cashAmount,
+          salesTaxFreeTotal: saleLocal.salesTaxFreeTotal,
+          salesNormalTotal: saleLocal.salesNormalTotal,
+          salesReducedTotal: saleLocal.salesReducedTotal,
+          taxNormalTotal: saleLocal.taxNormalTotal,
+          taxReducedTotal: saleLocal.taxReducedTotal,
+          status: saleLocal.status,
+        };
+        console.log(sale);
+        const saleRef = doc(collection(db, 'sales'), saleLocal.id);
+        const saleExist = await transaction.get(saleRef);
+        if (!saleExist.exists()) {
+          console.log('saleExist');
+          // transaction.set(saleRef, sale);
+          const detailConds = `saleId == '$0'`;
+          const saleDetailLocals = realm.objects<SaleDetailLocal>('SaleDetail').filtered(detailConds, saleLocal.id);
+          saleDetailLocals.forEach((saleDetailLocal) => {
+            let supplierRef: DocumentReference<Supplier> | null = null;
+            if (saleDetailLocal.supplierCode) {
+              supplierRef = doc(
+                collection(db, 'suppliers'),
+                saleDetailLocal.supplierCode
+              ) as DocumentReference<Supplier>;
+            }
+            const detail: SaleDetail = {
+              salesId: saleLocal.id,
+              index: saleDetailLocal.index,
+              productCode: saleDetailLocal.productCode,
+              product: {
+                abbr: saleDetailLocal.abbr,
+                code: saleDetailLocal.productCode,
+                kana: saleDetailLocal.kana,
+                name: saleDetailLocal.productName,
+                note: saleDetailLocal.note,
+                hidden: saleDetailLocal.hidden,
+                unregistered: saleDetailLocal.unregistered,
+                sellingPrice: saleDetailLocal.sellingPrice,
+                costPrice: saleDetailLocal.costPrice,
+                avgCostPrice: saleDetailLocal.avgCostPrice,
+                sellingTaxClass: saleDetailLocal.sellingTaxClass as TaxClass,
+                stockTaxClass: saleDetailLocal.stockTaxClass as TaxClass,
+                sellingTax: saleDetailLocal.sellingTax,
+                stockTax: saleDetailLocal.stockTax,
+                selfMedication: saleDetailLocal.selfMedication,
+                supplierRef,
+                categoryRef: null,
+                noReturn: saleDetailLocal.noReturn,
+              },
+              division: saleDetailLocal.division,
+              quantity: saleDetailLocal.quantity,
+              discount: saleDetailLocal.discount,
+              outputReceipt: saleDetailLocal.outputReceipt,
+              status: saleDetailLocal.status,
+            };
+            const detailRef = doc(collection(db, 'sales', saleRef.id, 'saleDetails'), saleDetailLocal.index.toString());
+            console.log(detail);
+            // transaction.set(detailRef, detail);
+
+            if (saleDetailLocal.productCode && saleDetailLocal.division === OTC_DIVISION) {
+              const registerSign = detail.status === 'Return' ? -1 : 1;
+              const incr = -saleDetailLocal.quantity * registerSign;
+              const productBulk = realm
+                .objects<ProductBulkLocal>('ProductBulk')
+                .find((bulk) => bulk.parentProductCode === saleDetailLocal.productCode);
+              const code = productBulk ? productBulk.childProductCode : saleDetailLocal.productCode;
+              const name = productBulk ? productBulk.childProductName : saleDetailLocal.productName;
+              const path = stockPath(shopCode, code);
+              const ref = doc(db, path);
+              const incmnt = productBulk ? productBulk.quantity * incr : incr;
+              const data = {
+                shopCode,
+                productCode: code,
+                productName: name,
+                quantity: increment(incmnt),
+                updatedAt: serverTimestamp(),
+              };
+              console.log(data);
+              // transaction.set(ref, data, { merge: true });
+            }
+          });
+        }
+      })
+    );
+
+    await Promise.all(
+      querySnapshot.docs.map(async (doc) => {
+        const sale = doc.data() as Sale;
+        const saleLocalExist = realm.objectForPrimaryKey<SaleLocal>('Sale', doc.id);
+        if (!saleLocalExist) {
+          const detailsSnapshot = await getDocs(collection(db, 'sales', doc.id, 'saleDetails'));
+          realm.write(() => {
+            realm.create<SaleLocal>('Sale', {
+              id: doc.id,
+              receiptNumber: sale.receiptNumber,
+              shopCode: sale.shopCode,
+              createdAt: sale.createdAt.toDate(),
+              detailsCount: sale.detailsCount,
+              salesTotal: sale.salesTotal,
+              taxTotal: sale.taxTotal,
+              discountTotal: sale.discountTotal,
+              paymentType: sale.paymentType,
+              cashAmount: sale.cashAmount,
+              salesTaxFreeTotal: sale.salesTaxFreeTotal,
+              salesNormalTotal: sale.salesNormalTotal,
+              salesReducedTotal: sale.salesReducedTotal,
+              taxNormalTotal: sale.taxNormalTotal,
+              taxReducedTotal: sale.taxReducedTotal,
+              status: sale.status,
+            });
+            detailsSnapshot.forEach((detailDoc) => {
+              const saleDetail = detailDoc.data() as SaleDetail;
+              realm.create<SaleDetailLocal>('SaleDetail', {
+                saleId: doc.id,
+                index: saleDetail.index,
+                productCode: saleDetail.productCode,
+                productName: saleDetail.product.name,
+                abbr: saleDetail.product.abbr,
+                kana: saleDetail.product.kana,
+                note: saleDetail.product.note,
+                hidden: saleDetail.product.hidden,
+                unregistered: saleDetail.product.unregistered,
+                sellingPrice: saleDetail.product.sellingPrice,
+                costPrice: saleDetail.product.costPrice,
+                avgCostPrice: saleDetail.product.avgCostPrice,
+                sellingTaxClass: saleDetail.product.sellingTaxClass,
+                stockTaxClass: saleDetail.product.stockTaxClass,
+                sellingTax: saleDetail.product.sellingTax,
+                stockTax: saleDetail.product.stockTax,
+                selfMedication: saleDetail.product.selfMedication,
+                supplierCode: saleDetail.product.supplierRef ? saleDetail.product.supplierRef.id : null,
+                noReturn: saleDetail.product.noReturn,
+                division: saleDetail.division,
+                quantity: saleDetail.quantity,
+                discount: saleDetail.discount,
+                outputReceipt: saleDetail.outputReceipt,
+                status: saleDetail.status,
+              });
+            });
+          });
+        }
+      })
+    );
+    realm.write(() => {
+      realm.create<SyncDateTime>(
+        'SyncDateTime',
+        {
+          shopCode,
+          updatedAt: syncStartAt,
         },
         Realm.UpdateMode.Modified
       );
