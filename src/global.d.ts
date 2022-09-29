@@ -1,12 +1,14 @@
 interface Window {
   electronAPI: {
-    printComponent: (url: string, callback: (response: any) => any) => Promise<void>;
+    createReceiptWindow: (id: string) => Promise<void>;
+    printContents: () => Promise<void>;
     updateLocalDb: (shopCode: string) => Promise<void>;
     syncFirestore: (shopCode: string) => Promise<void>;
     findProductByPk: (code: string) => Promise<any>;
     findProducts: (conds?: string) => Promise<any>;
     findProductSellingPriceByPk: (code: string) => Promise<any>;
     findProductSellingPrices: (conds?: string) => Promise<any>;
+    findSaleByPk: (id: string) => Promise<any>;
     findSales: (conds?: string, ...args: any[]) => Promise<any>;
     findSaleDetails: (conds?: string) => Promise<any>;
     getReceiptNumber: () => Promise<number>;
@@ -23,5 +25,6 @@ interface Window {
     findFixedCostRates: (conds?: string) => Promise<any>;
     findShopByPk: (shopCode: string) => Promise<any>;
     findSyncDateTimeByPk: (shopCode: string) => Promise<any>;
+    getPrescriptions: () => Promise<any>;
   };
 }

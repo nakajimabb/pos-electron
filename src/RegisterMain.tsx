@@ -9,6 +9,7 @@ import RegisterPayment from './RegisterPayment';
 import RegisterInput from './RegisterInput';
 import RegisterModify from './RegisterModify';
 import RegisterSearch from './RegisterSearch';
+import PrescriptionList from './PrescriptionList';
 import { BasketItem } from './types';
 import { OTC_DIVISION, nameWithCode, toAscii } from './tools';
 import { ProductLocal, RegisterItemLocal, RegisterStatusLocal, ShortcutItemLocal } from './realmConfig';
@@ -32,9 +33,10 @@ const RegisterMain: React.FC = () => {
   const [openInput, setOpenInput] = useState<boolean>(false);
   const [openModify, setOpenModify] = useState<boolean>(false);
   const [openSearch, setOpenSearch] = useState<boolean>(false);
+  const [openPrescriptions, setOpenPrescriptions] = useState<boolean>(false);
   const [registerMode, setRegisterMode] = useState<'Sales' | 'Return'>('Sales');
   const [paymentType, setPaymentType] = useState<'Cash' | 'Credit'>('Cash');
-  const [registerClosed, setRegisterClosed] = useState<boolean>(false);
+  const [registerClosed, setRegisterClosed] = useState<boolean>(true);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
@@ -234,6 +236,13 @@ const RegisterMain: React.FC = () => {
           document.getElementById('productCode')?.focus();
         }}
       ></RegisterSearch>
+      <PrescriptionList
+        open={openPrescriptions}
+        onClose={() => {
+          setOpenPrescriptions(false);
+          document.getElementById('productCode')?.focus();
+        }}
+      ></PrescriptionList>
       <Card className="container justify-center m-2 w-1/2">
         <Card.Body>
           {registerClosed ? (
@@ -289,6 +298,15 @@ const RegisterMain: React.FC = () => {
               >
                 返品
               </Button>
+              {/* <Button
+                color="light"
+                size="xs"
+                disabled={registerClosed}
+                className="mt-8 ml-4 w-24"
+                onClick={() => setOpenPrescriptions(true)}
+              >
+                レセコン
+              </Button> */}
             </Flex>
           )}
 

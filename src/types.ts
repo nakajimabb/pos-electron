@@ -321,6 +321,13 @@ export type InventoryDetail = {
   countedAt: Timestamp | null; // 最終カウント時刻
 };
 
+export type Prescription = {
+  sequence: number;
+  patientName: string;
+  patientKana: string;
+  amount: number;
+};
+
 export const deliveryPath = (shopCode: string, deliveryNumber: number | undefined = undefined) =>
   `shops/${shopCode}/deliveries/${deliveryNumber ?? ''}`;
 

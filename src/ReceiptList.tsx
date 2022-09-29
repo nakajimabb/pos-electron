@@ -1,23 +1,18 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print';
 import { format } from 'date-fns';
 import { Alert, Button, Card, Flex, Form, Table } from './components';
 import { useAppContext } from './AppContext';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
-import { prefectureName } from './prefecture';
 
 const MAX_SEARCH = 50;
 
 const ReceiptList: React.FC = () => {
   const { currentShop } = useAppContext();
   const [sales, setSales] = useState<[string, SaleLocal, string][]>();
-  const [sale, setSale] = useState<SaleLocal>();
-  const [saleDetails, setSaleDetails] = useState<SaleDetailLocal[]>([]);
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
   const [dateTimeTo, setDateTimeTo] = useState<Date>();
   const [error, setError] = useState<string>('');
-  const componentRef = useRef(null);
 
   const querySales = useCallback(async () => {
     if (!currentShop) return;
@@ -68,10 +63,6 @@ const ReceiptList: React.FC = () => {
     e.preventDefault();
     querySales();
   };
-
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-  });
 
   useEffect(() => {
     querySales();
@@ -157,12 +148,7 @@ const ReceiptList: React.FC = () => {
                             color="primary"
                             size="xs"
                             onClick={async () => {
-                              setSale(saleData);
-                              const saleDetailLocals = (await window.electronAPI.findSaleDetails(
-                                `saleId == '${saleData.id}'`
-                              )) as SaleDetailLocal[];
-                              setSaleDetails(saleDetailLocals);
-                              if (handlePrint) handlePrint();
+                              await window.electronAPI.createReceiptWindow(saleData.id);
                             }}
                           >
                             印刷
@@ -182,127 +168,6 @@ const ReceiptList: React.FC = () => {
             戻る
           </Button>
         </Link>
-      </div>
-      {/* 領収書 */}
-      <div className="hidden">
-        <div ref={componentRef} className="p-10">
-          <p className="text-right text-sm mt-2">
-            {sale?.createdAt?.toLocaleDateString()} {sale?.createdAt?.toLocaleTimeString()}
-          </p>
-          <p className="text-right text-sm mt-2">
-            {currentShop ? prefectureName(currentShop.prefecture) : ''}
-            {currentShop?.municipality}
-            {currentShop?.houseNumber}
-            {currentShop?.buildingName}
-          </p>
-          <p className="text-right text-sm mt-2">{currentShop?.formalName}</p>
-          <p className="text-center text-xl font-bold m-2">{sale?.status === 'Return' ? '返品' : '領収書'}</p>
-          <Table border="cell" className="table-fixed w-full text-sm shadow-none">
-            <Table.Head>
-              <Table.Row>
-                <Table.Cell type="th" className="w-1/12" />
-                <Table.Cell type="th" className="w-5/12">
-                  商品名
-                </Table.Cell>
-                <Table.Cell type="th" className="w-2/12">
-                  数量
-                </Table.Cell>
-                <Table.Cell type="th" className="w-2/12">
-                  単価
-                </Table.Cell>
-                <Table.Cell type="th" className="w-2/12">
-                  金額
-                </Table.Cell>
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {saleDetails
-                ?.filter((saleDetail) => saleDetail.outputReceipt)
-                ?.map((saleDetail, index) => (
-                  <Table.Row key={index}>
-                    <Table.Cell>
-                      {saleDetail.selfMedication ? '★' : ''}
-                      {saleDetail.sellingTax === 8 ? '軽' : ''}
-                    </Table.Cell>
-                    <Table.Cell>{saleDetail.productName}</Table.Cell>
-                    <Table.Cell className="text-right">
-                      {saleDetail.productCode ? saleDetail.quantity : null}
-                    </Table.Cell>
-                    <Table.Cell className="text-right">
-                      {saleDetail.productCode ? `¥${saleDetail.sellingPrice?.toLocaleString()}` : null}
-                    </Table.Cell>
-                    <Table.Cell className="text-right">
-                      ¥{(Number(saleDetail.sellingPrice) * saleDetail.quantity)?.toLocaleString()}
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-            </Table.Body>
-          </Table>
-
-          <Flex className="mt-4">
-            <div className="text-xs w-1/3 mt-4">
-              軽印は、軽減税率対象商品です。 <br />
-              ★印は、セルフメディケーション
-              <br />
-              税制対象製品です。
-            </div>
-            <Table border="none" size="sm" className="table-fixed w-2/3 shadow-none">
-              <Table.Head>
-                <Table.Row>
-                  <Table.Cell type="th" className="w-3/12" />
-                  <Table.Cell type="th" className="w-3/12" />
-                  <Table.Cell type="th" className="w-6/12" />
-                </Table.Row>
-              </Table.Head>
-              <Table.Body>
-                <Table.Row>
-                  <Table.Cell type="th" className="text-lg">
-                    {sale?.status === 'Return' ? 'ご返金' : '合計'}
-                  </Table.Cell>
-                  <Table.Cell className="text-right text-xl pr-4">¥{sale?.salesTotal.toLocaleString()}</Table.Cell>
-                  <Table.Cell></Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell type="th">非課税対象</Table.Cell>
-                  <Table.Cell className="text-right pr-4">
-                    ¥{(Number(sale?.salesTaxFreeTotal) + 0).toLocaleString()}
-                  </Table.Cell>
-                  <Table.Cell></Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell type="th">8%対象</Table.Cell>
-                  <Table.Cell className="text-right pr-4">
-                    ¥{(Number(sale?.salesReducedTotal) + 0).toLocaleString()}
-                  </Table.Cell>
-                  <Table.Cell>（内消費税等　¥{(Number(sale?.taxReducedTotal) + 0).toLocaleString()}）</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell type="th">10%対象</Table.Cell>
-                  <Table.Cell className="text-right pr-4">
-                    ¥{(Number(sale?.salesNormalTotal) + 0).toLocaleString()}
-                  </Table.Cell>
-                  <Table.Cell>（内消費税等　¥{(Number(sale?.taxNormalTotal) + 0).toLocaleString()}）</Table.Cell>
-                </Table.Row>
-                {sale?.status === 'Return' || saleDetails.some((detail) => !detail.outputReceipt) ? null : (
-                  <Table.Row>
-                    <Table.Cell type="th">お預かり</Table.Cell>
-                    <Table.Cell className="text-right pr-4">¥{sale?.cashAmount.toLocaleString()}</Table.Cell>
-                    <Table.Cell></Table.Cell>
-                  </Table.Row>
-                )}
-                {sale?.status === 'Return' || saleDetails.some((detail) => !detail.outputReceipt) ? null : (
-                  <Table.Row>
-                    <Table.Cell type="th">お釣り</Table.Cell>
-                    <Table.Cell className="text-right pr-4">
-                      ¥{(Number(sale?.cashAmount) - Number(sale?.salesTotal)).toLocaleString()}
-                    </Table.Cell>
-                    <Table.Cell></Table.Cell>
-                  </Table.Row>
-                )}
-              </Table.Body>
-            </Table>
-          </Flex>
-        </div>
       </div>
     </Flex>
   );

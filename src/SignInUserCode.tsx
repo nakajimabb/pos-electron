@@ -19,6 +19,7 @@ const SignInUserCode: React.FC = () => {
       signInWithEmailAndPassword(auth, email, account.password)
         .then(() => {
           setLoading(false);
+          window.location.href = '/main_window#/register_open';
         })
         .catch((error) => {
           console.log({ error });

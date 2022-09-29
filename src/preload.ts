@@ -6,9 +6,11 @@ import { RegisterStatusLocal, SaleDetailLocal, SaleLocal, ShortcutItemLocal } fr
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  printComponent: async (url: string, callback: (response: any) => any) => {
-    let response = await ipcRenderer.invoke('printComponent', url);
-    callback(response);
+  createReceiptWindow: async (id: string) => {
+    await ipcRenderer.invoke('createReceiptWindow', id);
+  },
+  printContents: async () => {
+    await ipcRenderer.invoke('printContents');
   },
   updateLocalDb: async (shopCode: string) => {
     return await ipcRenderer.invoke('updateLocalDb', shopCode);
@@ -27,6 +29,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   findProductSellingPrices: async (conds?: string) => {
     return await ipcRenderer.invoke('findProductSellingPrices', conds);
+  },
+  findSaleByPk: async (id: string) => {
+    return await ipcRenderer.invoke('findSaleByPk', id);
   },
   findSales: async (conds?: string, ...args: any[]) => {
     return await ipcRenderer.invoke('findSales', conds, ...args);
@@ -75,5 +80,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   findSyncDateTimeByPk: async (shopCode: string) => {
     return await ipcRenderer.invoke('findSyncDateTimeByPk', shopCode);
+  },
+  getPrescriptions: async () => {
+    return await ipcRenderer.invoke('getPrescriptions');
   },
 });
