@@ -6,7 +6,7 @@ import firebaseApp from './firebase';
 
 const MAIL_DOMAIN = '@ebondregister.com';
 
-const SignInUserCode: React.FC = () => {
+const SignInUserCode: React.FC<{ moveTo: string }> = ({ moveTo }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [account, setAccount] = useState({ code: '', password: '' });
   const [error, setError] = useState<string>('');
@@ -19,7 +19,7 @@ const SignInUserCode: React.FC = () => {
       signInWithEmailAndPassword(auth, email, account.password)
         .then(() => {
           setLoading(false);
-          window.location.href = '/main_window#/register_open';
+          window.location.href = `/main_window#/${moveTo}`;
         })
         .catch((error) => {
           console.log({ error });

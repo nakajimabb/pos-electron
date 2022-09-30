@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, Flex, Tabs } from './components';
 import SignInUserCode from './SignInUserCode';
 
-const SignIn: React.FC = () => {
+const SignIn: React.FC<{ moveTo: string }> = ({ moveTo }) => {
   const [tab, setTab] = useState('email');
 
   return (
@@ -11,7 +11,7 @@ const SignIn: React.FC = () => {
         <Tabs value={tab} variant="bar" size="sm" baseLine onChange={(v) => setTab(v)} className="w-96">
           <Tabs.Tab label="店舗番号でログイン" value="email" />
         </Tabs>
-        <Card.Body className="bg-gray-50">{tab === 'email' && <SignInUserCode />}</Card.Body>
+        <Card.Body className="bg-gray-50">{tab === 'email' && <SignInUserCode moveTo={moveTo} />}</Card.Body>
       </Card>
     </Flex>
   );

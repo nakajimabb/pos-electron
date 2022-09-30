@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useContext, createContext, useCallback } from 'react';
-
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { getAuth, User, onAuthStateChanged } from 'firebase/auth';
-import { userCodeFromEmail, OTC_DIVISION, hiraToKana } from './tools';
-import { Role, Shop, BasketItem } from './types';
+import { OTC_DIVISION, userCodeFromEmail } from './tools';
+import { Shop, BasketItem } from './types';
 import { ProductBundleLocal, ProductBulkLocal, FixedCostRateLocal } from './realmConfig';
 import { initializeApp } from 'firebase/app';
 import { firebaseConfig } from './firebaseConfig';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
@@ -18,7 +17,6 @@ export type ContextType = {
   productBundles: ProductBundleLocal[];
   productBulks: ProductBulkLocal[];
   fixedCostRates: FixedCostRateLocal[];
-  role: Role | null;
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
 };
 
@@ -28,7 +26,6 @@ const AppContext = createContext({
   productBundles: [],
   productBulks: [],
   fixedCostRates: [],
-  role: null,
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
 } as ContextType);
 
@@ -42,7 +39,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
   const [productBundles, setProductBundles] = useState<ProductBundleLocal[]>([]);
   const [productBulks, setProductBulks] = useState<ProductBulkLocal[]>([]);
   const [fixedCostRates, setFixedCostRates] = useState<FixedCostRateLocal[]>([]);
-  const [role, setRole] = useState<Role | null>(null);
 
   const getProductBundles = useCallback(async () => {
     const bundles = (await window.electronAPI.findProductBundles()) as ProductBundleLocal[];
@@ -66,21 +62,27 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
   }, [getProductBundles, getProductBulks, getFixedCostRates]);
 
   useEffect(() => {
+    const getCurrentShop = async () => {
+      const shopData = await window.electronAPI.getCurrentShop();
+      if (shopData && !currentShop) {
+        setCurrentShop(shopData as Shop);
+      }
+    };
+    getCurrentShop();
+  }, []);
+
+  useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setCurrentShop(null);
-      setRole(null);
       if (user && user.email) {
-        // set role
-        const token = await user.getIdTokenResult();
-        const role = token.claims.role;
-        if (typeof role === 'string') setRole(role as Role);
-        // set currentShop
         const shopCode = userCodeFromEmail(user.email);
         if (shopCode) {
           const snap = await getDoc(doc(db, 'shops', shopCode));
-          const shop = snap.data();
-          if (shop) setCurrentShop(shop as Shop);
+          const shopData = snap.data();
+          if (shopData) {
+            setCurrentShop(shopData as Shop);
+          }
         }
       }
     });
@@ -138,7 +140,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         productBundles,
         productBulks,
         fixedCostRates,
-        role,
         addBundleDiscount,
       }}
     >

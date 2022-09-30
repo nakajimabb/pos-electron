@@ -75,6 +75,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   findFixedCostRates: async (conds?: string) => {
     return await ipcRenderer.invoke('findFixedCostRates', conds);
   },
+  getCurrentShop: async () => {
+    return await ipcRenderer.invoke('getCurrentShop');
+  },
   findShopByPk: async (shopCode: string) => {
     return await ipcRenderer.invoke('findShopByPk', shopCode);
   },

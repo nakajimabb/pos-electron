@@ -84,7 +84,7 @@ const RegisterOpen: React.FC = () => {
       </Flex>
     );
   } else {
-    return <SignIn />;
+    return <SignIn moveTo="register_open" />;
   }
 };
 export default RegisterOpen;

@@ -522,6 +522,32 @@ ipcMain.handle('findFixedCostRates', (event, conds) => {
   return result;
 });
 
+ipcMain.handle('getCurrentShop', (event) => {
+  const shops = realm.objects<Shop>('Shop').sorted('code');
+  if (shops.length > 0) {
+    return {
+      code: shops[0].code,
+      name: shops[0].name,
+      kana: shops[0].kana,
+      formalName: shops[0].formalName,
+      formalKana: shops[0].formalKana,
+      hidden: shops[0].hidden,
+      email: shops[0].email,
+      zip: shops[0].zip,
+      prefecture: shops[0].prefecture,
+      municipality: shops[0].municipality,
+      houseNumber: shops[0].houseNumber,
+      buildingName: shops[0].buildingName,
+      tel: shops[0].tel,
+      fax: shops[0].fax,
+      orderable: shops[0].orderable ?? false,
+      role: shops[0].role ?? 'shop',
+    };
+  } else {
+    return null;
+  }
+});
+
 ipcMain.handle('findShopByPk', (event, shopCode) => {
   const shop = realm.objectForPrimaryKey<Shop>('Shop', shopCode);
   if (shop) {

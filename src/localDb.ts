@@ -63,6 +63,33 @@ export const updateLocalDb = async (shopCode: string) => {
   await signInWithEmailAndPassword(auth, email, 'password');
   const realm = await Realm.open(RealmConfig);
 
+  const docSnapshot = await getDoc(doc(db, 'shops', shopCode));
+  realm.write(() => {
+    const shop = docSnapshot.data() as Shop;
+    realm.create<Shop>(
+      'Shop',
+      {
+        code: shop.code,
+        name: shop.name,
+        kana: shop.kana,
+        formalName: shop.formalName,
+        formalKana: shop.formalKana,
+        hidden: shop.hidden,
+        email: shop.email,
+        zip: shop.zip,
+        prefecture: shop.prefecture,
+        municipality: shop.municipality,
+        houseNumber: shop.houseNumber,
+        buildingName: shop.buildingName,
+        tel: shop.tel,
+        fax: shop.fax,
+        orderable: shop.orderable ?? false,
+        role: shop.role ?? 'shop',
+      },
+      Realm.UpdateMode.Modified
+    );
+  });
+
   const querySnapshot1 = await getDocs(query(collection(db, 'registerItems'), orderBy('sortOrder')));
   realm.write(() => {
     querySnapshot1.forEach((doc) => {
@@ -214,33 +241,6 @@ export const updateLocalDb = async (shopCode: string) => {
         Realm.UpdateMode.Modified
       );
     });
-  });
-
-  const docSnapshot = await getDoc(doc(db, 'shops', shopCode));
-  realm.write(() => {
-    const shop = docSnapshot.data() as Shop;
-    realm.create<Shop>(
-      'Shop',
-      {
-        code: shop.code,
-        name: shop.name,
-        kana: shop.kana,
-        formalName: shop.formalName,
-        formalKana: shop.formalKana,
-        hidden: shop.hidden,
-        email: shop.email,
-        zip: shop.zip,
-        prefecture: shop.prefecture,
-        municipality: shop.municipality,
-        houseNumber: shop.houseNumber,
-        buildingName: shop.buildingName,
-        tel: shop.tel,
-        fax: shop.fax,
-        orderable: shop.orderable ?? false,
-        role: shop.role ?? 'shop',
-      },
-      Realm.UpdateMode.Modified
-    );
   });
 };
 

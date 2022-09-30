@@ -21,7 +21,7 @@ const RegisterMain: React.FC = () => {
     product: ProductLocal;
   };
 
-  const { currentShop, addBundleDiscount } = useAppContext();
+  const { currentUser, currentShop, addBundleDiscount } = useAppContext();
   const [productCode, setProductCode] = useState<string>('');
   const [productError, setProductError] = useState<string>('');
   const [basketItemIndex, setBasketItemIndex] = useState<number>(0);
@@ -36,7 +36,7 @@ const RegisterMain: React.FC = () => {
   const [openPrescriptions, setOpenPrescriptions] = useState<boolean>(false);
   const [registerMode, setRegisterMode] = useState<'Sales' | 'Return'>('Sales');
   const [paymentType, setPaymentType] = useState<'Cash' | 'Credit'>('Cash');
-  const [registerClosed, setRegisterClosed] = useState<boolean>(true);
+  const [registerClosed, setRegisterClosed] = useState<boolean>(false);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
@@ -142,10 +142,16 @@ const RegisterMain: React.FC = () => {
     exclusiveTaxTotal;
 
   const getRegisterStatus = useCallback(async () => {
-    const status = await window.electronAPI.getRegisterStatus();
-    if (status) {
-      setRegisterStatus(status);
-      setRegisterClosed(!!status.closedAt);
+    const shopData = await window.electronAPI.getCurrentShop();
+    console.log(shopData);
+    if (shopData) {
+      const status = await window.electronAPI.getRegisterStatus();
+      if (status) {
+        setRegisterStatus(status);
+        setRegisterClosed(!!status.closedAt);
+      } else {
+        setRegisterClosed(true);
+      }
     } else {
       setRegisterClosed(true);
     }
@@ -186,12 +192,11 @@ const RegisterMain: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!currentShop) return;
     getRegisterStatus();
     getRegisterItems();
     getShortcutItems();
     document.getElementById('productCode')?.focus();
-  }, [currentShop, getRegisterStatus, getRegisterItems, getShortcutItems]);
+  }, [getRegisterStatus, getRegisterItems, getShortcutItems]);
 
   return (
     <div className="flex w-full h-screen">
@@ -459,9 +464,15 @@ const RegisterMain: React.FC = () => {
               {currentShop && `${nameWithCode(currentShop)} \u00A0`}
               {!registerClosed &&
                 `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
-              <Link to="/" onClick={logout} className="underline">
-                ログアウト
-              </Link>
+              {currentUser ? (
+                <Link to="/" onClick={logout} className="underline">
+                  ログアウト
+                </Link>
+              ) : (
+                <Link to="/sign_in" className="underline">
+                  ログイン
+                </Link>
+              )}
             </p>
             <div className="p-2">
               <div className="grid grid-cols-4 gap-2">

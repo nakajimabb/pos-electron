@@ -23,6 +23,7 @@ interface Window {
     findProductBundles: (conds?: string) => Promise<any>;
     findProductBulks: (conds?: string) => Promise<any>;
     findFixedCostRates: (conds?: string) => Promise<any>;
+    getCurrentShop: () => Promise<any>;
     findShopByPk: (shopCode: string) => Promise<any>;
     findSyncDateTimeByPk: (shopCode: string) => Promise<any>;
     getPrescriptions: () => Promise<any>;

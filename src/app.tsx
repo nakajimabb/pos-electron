@@ -14,6 +14,7 @@ import './index.css';
 import './App.css';
 import './firebase';
 import ReceiptPrint from './ReceiptPrint';
+import SignIn from './SignIn';
 
 const App: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<RegisterMain />} />
             <Route path="/main_window" element={<RegisterMain />} />
+            <Route path="/sign_in" element={<SignIn moveTo="" />} />
             <Route path="/register_open" element={<RegisterOpen />} />
             <Route path="/register_close" element={<RegisterClose />} />
             <Route path="/shortcut_edit" element={<ShortcutEdit />} />
