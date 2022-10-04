@@ -98,6 +98,7 @@ export type BasketItem = {
   division: string;
   outputReceipt: boolean;
   quantity: number;
+  prescription?: Prescription;
 };
 
 export type ShortcutItem = {
@@ -322,6 +323,7 @@ export type InventoryDetail = {
 };
 
 export type Prescription = {
+  code: string;
   sequence: number;
   patientName: string;
   patientKana: string;

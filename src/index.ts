@@ -25,6 +25,27 @@ import { Shop, Prescription } from './types';
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
+const SIPS_DIR = app.getPath('home') + '/SIPS';
+const SIPS_INDEX_DIR = SIPS_DIR + '/INDEX';
+const SIPS_DATA_DIR = SIPS_DIR + '/DATA';
+const SIPS_FIXED_DIR = SIPS_DIR + '/FIXED';
+
+if (!fs.existsSync(SIPS_DIR)) {
+  fs.mkdirSync(SIPS_DIR);
+}
+
+if (!fs.existsSync(SIPS_INDEX_DIR)) {
+  fs.mkdirSync(SIPS_INDEX_DIR);
+}
+
+if (!fs.existsSync(SIPS_DATA_DIR)) {
+  fs.mkdirSync(SIPS_DATA_DIR);
+}
+
+if (!fs.existsSync(SIPS_FIXED_DIR)) {
+  fs.mkdirSync(SIPS_FIXED_DIR);
+}
+
 let realm: Realm;
 Realm.open(RealmConfig).then((r) => {
   realm = r;
@@ -88,7 +109,6 @@ const printOptions = {
 };
 
 ipcMain.handle('createReceiptWindow', (event, id) => {
-  console.log('createReceiptWindow');
   const win = new BrowserWindow({
     show: false,
     webPreferences: {
@@ -99,7 +119,6 @@ ipcMain.handle('createReceiptWindow', (event, id) => {
 });
 
 ipcMain.handle('printContents', (event) => {
-  console.log('printContents');
   event.sender.print(printOptions, (success, failureReason) => {
     if (!success) {
       console.log(failureReason);
@@ -244,8 +263,6 @@ ipcMain.handle('findSaleByPk', (event, id) => {
 });
 
 ipcMain.handle('findSales', (event, conds, ...args) => {
-  console.log(conds);
-  console.log(args);
   let result: any[] = [];
   let sales = realm.objects<SaleLocal>('Sale');
   if (conds) {
@@ -382,7 +399,6 @@ ipcMain.handle('getRegisterStatus', (event, dateString) => {
 });
 
 ipcMain.handle('setRegisterStatus', (event, status: RegisterStatusLocal) => {
-  console.log(status);
   realm.write(() => {
     realm.create<RegisterStatusLocal>(
       'RegisterStatus',
@@ -394,6 +410,25 @@ ipcMain.handle('setRegisterStatus', (event, status: RegisterStatusLocal) => {
       Realm.UpdateMode.Modified
     );
   });
+});
+
+ipcMain.handle('findRegisterItemByPk', (event, index) => {
+  const registerItem = realm.objectForPrimaryKey<RegisterItemLocal>('RegisterItem', index);
+  if (registerItem) {
+    return {
+      index: registerItem.index,
+      code: registerItem.code,
+      name: registerItem.name,
+      division: registerItem.division,
+      defaultPrice: registerItem.defaultPrice,
+      outputReceipt: registerItem.outputReceipt,
+      sortOrder: registerItem.sortOrder,
+      taxClass: registerItem.taxClass,
+      tax: registerItem.tax,
+    };
+  } else {
+    return null;
+  }
 });
 
 ipcMain.handle('findRegisterItems', (event, conds) => {
@@ -549,7 +584,7 @@ ipcMain.handle('getCurrentShop', (event) => {
 });
 
 ipcMain.handle('findShopByPk', (event, shopCode) => {
-  const shop = realm.objectForPrimaryKey<Shop>('Shop', shopCode);
+  const shop: Shop = realm.objectForPrimaryKey<Shop>('Shop', shopCode);
   if (shop) {
     return {
       code: shop.code,
@@ -588,12 +623,13 @@ ipcMain.handle('findSyncDateTimeByPk', (event, shopCode) => {
 
 ipcMain.handle('getPrescriptions', (event) => {
   let result: any[] = [];
-  const files = fs.readdirSync('/Users/chihaya/temp/INDEX');
-  files.forEach((fileName) => {
-    const buffer = fs.readFileSync(`/Users/chihaya/temp/DATA/${fileName}`);
+  const files = fs.readdirSync(SIPS_INDEX_DIR);
+  files.sort().forEach((fileName) => {
+    const buffer = fs.readFileSync(`${SIPS_DATA_DIR}/${fileName}`);
     const content = iconv.decode(buffer, 'Shift_JIS');
     const lines = content.split(/\r?\n/);
     const data: Prescription = {
+      code: '',
       sequence: 0,
       patientName: '',
       patientKana: '',
@@ -607,6 +643,7 @@ ipcMain.handle('getPrescriptions', (event) => {
           data.patientKana = cols[2];
         } else if (cols[0] === '2') {
           if (data.sequence == 0) {
+            data.code = cols[1];
             data.sequence = Number(cols[2]);
           }
         } else if (cols[0] === '5') {
@@ -614,7 +651,66 @@ ipcMain.handle('getPrescriptions', (event) => {
         }
       }
     });
+
+    const dataType = fileName.substring(0, 1);
+    const prescriptionCode = fileName.substring(1, 16);
+    const existedIndex = result.findIndex((d) => d.code === prescriptionCode);
+    switch (dataType) {
+      case 'A':
+        if (existedIndex < 0) {
+          result.push(data);
+        }
+        break;
+      case 'U':
+        if (existedIndex >= 0) {
+          result.splice(existedIndex, 1, data);
+        }
+        break;
+      case 'D':
+        if (existedIndex >= 0) {
+          result.splice(existedIndex, 1);
+        }
+        break;
+    }
+  });
+  return result;
+});
+
+ipcMain.handle('getFixedPrescriptions', (event) => {
+  let result: any[] = [];
+  const files = fs.readdirSync(SIPS_FIXED_DIR);
+  files.forEach((fileName) => {
+    const buffer = fs.readFileSync(`${SIPS_FIXED_DIR}/${fileName}`);
+    const content = iconv.decode(buffer, 'Shift_JIS');
+    const lines = content.split(/\r?\n/);
+    const data: Prescription = {
+      code: '',
+      sequence: 0,
+      patientName: '',
+      patientKana: '',
+      amount: 0,
+    };
+    const line = lines[0];
+    const cols = line.split(',');
+    if (cols.length > 0) {
+      data.code = cols[0];
+      data.sequence = Number(cols[1]);
+      data.patientName = cols[2];
+      data.patientKana = cols[3];
+      data.amount = Number(cols[4]);
+    }
     result.push(data);
   });
   return result;
+});
+
+ipcMain.handle('setFixedPrescription', (event, prescription: Prescription) => {
+  const fileName = `${SIPS_FIXED_DIR}/${prescription.code}.txt`;
+  fs.writeFileSync(fileName, '');
+  var fd = fs.openSync(fileName, 'w');
+  const data = `${prescription.code},${prescription.sequence},${prescription.patientName},${prescription.patientKana},${prescription.amount}`;
+  var buf = iconv.encode(data, 'Shift_JIS');
+  fs.write(fd, buf, 0, buf.length, (error) => {
+    if (error) console.log(error);
+  });
 });

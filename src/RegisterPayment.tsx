@@ -3,7 +3,7 @@ import { Button, Form, Modal, Table } from './components';
 import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
-import { createId, toNumber } from './tools';
+import { createId, toNumber, PATIENT_DIVISION } from './tools';
 
 type Props = {
   open: boolean;
@@ -89,6 +89,15 @@ const RegisterPayment: React.FC<Props> = ({
       }
       sale.discountTotal = discountTotal;
     });
+    await Promise.all(
+      basketItems
+        .filter((item) => {
+          return item.division === PATIENT_DIVISION && item.prescription;
+        })
+        .map((item) => {
+          window.electronAPI.setFixedPrescription(item.prescription);
+        })
+    );
     await window.electronAPI.createSaleWithDetails(sale, details);
     if (basketItems.some((item) => item.outputReceipt)) {
       await window.electronAPI.createReceiptWindow(sale.id);

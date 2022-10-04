@@ -15,6 +15,7 @@ interface Window {
     createSaleWithDetails: (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => Promise<void>;
     getRegisterStatus: (dateString?: string) => Promise<any>;
     setRegisterStatus: (status: RegisterStatusLocal) => Promise<void>;
+    findRegisterItemByPk: (index: number) => Promise<any>;
     findRegisterItems: (conds?: string) => Promise<any>;
     findShortcutItemByPk: (index: number) => Promise<any>;
     findShortcutItems: (conds?: string) => Promise<any>;
@@ -27,5 +28,7 @@ interface Window {
     findShopByPk: (shopCode: string) => Promise<any>;
     findSyncDateTimeByPk: (shopCode: string) => Promise<any>;
     getPrescriptions: () => Promise<any>;
+    getFixedPrescriptions: () => Promise<any>;
+    setFixedPrescription: (prescription: Prescription) => Promise<void>;
   };
 }

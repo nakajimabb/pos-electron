@@ -15,8 +15,7 @@ const RegisterOpen: React.FC = () => {
     e.preventDefault();
     setError('');
     try {
-      const status = await window.electronAPI.getRegisterStatus();
-      console.log(status);
+      const status = await window.electronAPI.getRegisterStatus(format(openDate, 'yyyyMMdd'));
       if (status) {
         if (status.openedAt.toLocaleDateString() === openDate.toLocaleDateString() && status.closedAt) {
           if (openDate.toLocaleDateString() === new Date().toLocaleDateString()) {

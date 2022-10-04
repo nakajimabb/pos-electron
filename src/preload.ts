@@ -2,6 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { RegisterStatusLocal, SaleDetailLocal, SaleLocal, ShortcutItemLocal } from './realmConfig';
+import { Prescription } from './types';
 
 const { contextBridge, ipcRenderer } = require('electron');
 
@@ -51,6 +52,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setRegisterStatus: async (status: RegisterStatusLocal) => {
     return await ipcRenderer.invoke('setRegisterStatus', status);
   },
+  findRegisterItemByPk: async (index: number) => {
+    return await ipcRenderer.invoke('findRegisterItemByPk', index);
+  },
   findRegisterItems: async (conds?: string) => {
     return await ipcRenderer.invoke('findRegisterItems', conds);
   },
@@ -86,5 +90,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getPrescriptions: async () => {
     return await ipcRenderer.invoke('getPrescriptions');
+  },
+  getFixedPrescriptions: async () => {
+    return await ipcRenderer.invoke('getFixedPrescriptions');
+  },
+  setFixedPrescription: async (prescription: Prescription) => {
+    await ipcRenderer.invoke('setFixedPrescription', prescription);
   },
 });

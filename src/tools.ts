@@ -113,6 +113,7 @@ export const toDateString = (date: Date, format: string) => {
   return result;
 };
 
+export const PATIENT_DIVISION = '1';
 export const OTC_DIVISION = '5';
 
 export const Divisions: { [code: string]: string } = {

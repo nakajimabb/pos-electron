@@ -143,7 +143,6 @@ const RegisterMain: React.FC = () => {
 
   const getRegisterStatus = useCallback(async () => {
     const shopData = await window.electronAPI.getCurrentShop();
-    console.log(shopData);
     if (shopData) {
       const status = await window.electronAPI.getRegisterStatus();
       if (status) {
@@ -195,8 +194,9 @@ const RegisterMain: React.FC = () => {
     getRegisterStatus();
     getRegisterItems();
     getShortcutItems();
+    setOpenPrescriptions(!registerClosed);
     document.getElementById('productCode')?.focus();
-  }, [getRegisterStatus, getRegisterItems, getShortcutItems]);
+  }, [getRegisterStatus, getRegisterItems, getShortcutItems, setOpenPrescriptions]);
 
   return (
     <div className="flex w-full h-screen">
@@ -209,6 +209,7 @@ const RegisterMain: React.FC = () => {
         setRegisterMode={setRegisterMode}
         onClose={() => {
           setOpenPayment(false);
+          setOpenPrescriptions(true);
           document.getElementById('productCode')?.focus();
         }}
       />
@@ -243,6 +244,8 @@ const RegisterMain: React.FC = () => {
       ></RegisterSearch>
       <PrescriptionList
         open={openPrescriptions}
+        basketItems={basketItems}
+        setBasketItems={setBasketItems}
         onClose={() => {
           setOpenPrescriptions(false);
           document.getElementById('productCode')?.focus();
@@ -288,7 +291,7 @@ const RegisterMain: React.FC = () => {
                 color={registerMode === 'Sales' ? 'info' : 'light'}
                 size="xs"
                 disabled={basketItems.length > 0 || registerClosed}
-                className="w-16 mt-8 ml-16"
+                className="w-16 mt-8 ml-14"
                 onClick={() => setRegisterMode('Sales')}
               >
                 売上
@@ -303,15 +306,15 @@ const RegisterMain: React.FC = () => {
               >
                 返品
               </Button>
-              {/* <Button
+              <Button
                 color="light"
                 size="xs"
                 disabled={registerClosed}
-                className="mt-8 ml-4 w-24"
+                className="mt-8 ml-4 mr-4 w-16"
                 onClick={() => setOpenPrescriptions(true)}
               >
-                レセコン
-              </Button> */}
+                SIPS
+              </Button>
             </Flex>
           )}
 

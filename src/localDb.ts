@@ -266,7 +266,6 @@ export const syncFirestore = async (shopCode: string) => {
     console.log('querySnapshot');
     const realmConds = `shopCode == '${shopCode}' AND createdAt >= $0`;
     const saleLocals = realm.objects<SaleLocal>('Sale').filtered(realmConds, dateTime);
-    console.log(saleLocals.length);
     await Promise.all(
       saleLocals.map(async (saleLocal) => {
         const sale: Sale = {
@@ -286,7 +285,6 @@ export const syncFirestore = async (shopCode: string) => {
           taxReducedTotal: saleLocal.taxReducedTotal,
           status: saleLocal.status,
         };
-        console.log(sale);
         const saleRef = doc(collection(db, 'sales'), saleLocal.id);
         const saleExist = await transaction.get(saleRef);
         if (!saleExist.exists()) {

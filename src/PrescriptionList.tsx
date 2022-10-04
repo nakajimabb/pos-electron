@@ -1,33 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Card, Flex, Form, Modal, Table } from './components';
+import { Alert, Button, Card, Flex, Form, Modal, Table, Tabs } from './components';
 import firebaseError from './firebaseError';
-import { Prescription } from './types';
+import { BasketItem, Prescription } from './types';
 
 type Props = {
   open: boolean;
+  basketItems: BasketItem[];
+  setBasketItems: React.Dispatch<React.SetStateAction<BasketItem[]>>;
   onClose: () => void;
 };
 
-const PrescriptionList: React.FC<Props> = ({ open, onClose }) => {
+const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, onClose }) => {
+  const [tab, setTab] = useState('unfixed');
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [fixedPrescriptions, setFixedPrescriptions] = useState<Prescription[]>([]);
   const [error, setError] = useState<string>('');
 
-  const getPrescriptions = () => async () => {
+  const getPrescriptions = async () => {
     try {
       setError('');
       const prescriptions = (await window.electronAPI.getPrescriptions()) as Prescription[];
+      const fixedPrescriptions = (await window.electronAPI.getFixedPrescriptions()) as Prescription[];
+      const basketPrescriptions = basketItems.filter((item) => item.prescription).map((item) => item.prescription);
       if (prescriptions) {
-        setPrescriptions(prescriptions);
+        const unfixedPrescriptions = prescriptions.filter((prescription) => {
+          return (
+            fixedPrescriptions.every((fp) => fp.code !== prescription.code) &&
+            basketPrescriptions.every((bp) => bp.code !== prescription.code)
+          );
+        });
+        setPrescriptions(unfixedPrescriptions);
       }
+      setFixedPrescriptions(fixedPrescriptions);
     } catch (error) {
       console.log({ error });
       setError(firebaseError(error));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    getPrescriptions();
+  const save = async (prescription: Prescription) => {
+    const registerItem = await window.electronAPI.findRegisterItemByPk(1);
+    if (registerItem) {
+      const basketItem: any = {
+        product: {
+          abbr: '',
+          code: registerItem.code,
+          kana: '',
+          name: registerItem.name,
+          hidden: false,
+          costPrice: null,
+          avgCostPrice: null,
+          sellingPrice: prescription.amount,
+          stockTaxClass: null,
+          sellingTaxClass: registerItem.taxClass,
+          stockTax: null,
+          sellingTax: registerItem.tax,
+          selfMedication: false,
+          supplierRef: null,
+          categoryRef: null,
+          note: '',
+        },
+        division: registerItem.division,
+        outputReceipt: registerItem.outputReceipt,
+        quantity: 1,
+        prescription,
+      };
+      setBasketItems([...basketItems, basketItem]);
+    }
+    onClose();
   };
 
   useEffect(() => {
@@ -35,22 +75,14 @@ const PrescriptionList: React.FC<Props> = ({ open, onClose }) => {
   }, [open]);
 
   return (
-    <Modal open={open} size="none" onClose={onClose} className="w-full">
-      <Modal.Header centered={false} onClose={onClose}>
-        商品検索
-      </Modal.Header>
+    <Modal open={open} size="none" onClose={onClose} className="w-2/3">
       <Modal.Body>
         <Card className="mx-8 mb-2">
-          <Flex justify_content="between" align_items="center" className="p-4">
-            <Form onSubmit={handleSubmit}>
-              <Flex>
-                <Button variant="outlined" size="sm" className="mr-2" onClick={getPrescriptions()}>
-                  更新
-                </Button>
-              </Flex>
-            </Form>
-          </Flex>
-          <Card.Body className="p-4">
+          <Tabs value={tab} variant="bar" size="sm" onChange={(v) => setTab(v)} className="w-96">
+            <Tabs.Tab label="未精算" value="unfixed" />
+            <Tabs.Tab label="精算済み" value="fixed" />
+          </Tabs>
+          <Card.Body className="px-4 py-2">
             {error && <Alert severity="error">{error}</Alert>}
             <div className="overflow-y-scroll" style={{ height: '24rem' }}>
               <Table border="row" className="table-fixed w-full text-xs">
@@ -69,20 +101,41 @@ const PrescriptionList: React.FC<Props> = ({ open, onClose }) => {
                   </Table.Row>
                 </Table.Head>
                 <Table.Body>
-                  {prescriptions.map((prescription, i) => {
-                    return (
-                      <Table.Row size="xs" className="hover:bg-gray-300" key={i}>
-                        <Table.Cell>{prescription.sequence}</Table.Cell>
-                        <Table.Cell className="truncate">{`${prescription.patientName}　${prescription.patientKana}`}</Table.Cell>
-                        <Table.Cell className="text-right">{prescription.amount.toLocaleString()}</Table.Cell>
-                        <Table.Cell>
-                          <Button color="primary" size="xs">
-                            選択
-                          </Button>
-                        </Table.Cell>
-                      </Table.Row>
-                    );
-                  })}
+                  {tab === 'unfixed'
+                    ? prescriptions.map((prescription, i) => {
+                        return (
+                          <Table.Row size="xs" className="hover:bg-gray-300" key={i}>
+                            <Table.Cell>{prescription.sequence}</Table.Cell>
+                            <Table.Cell className="truncate">{`${prescription.patientName}　${prescription.patientKana}`}</Table.Cell>
+                            <Table.Cell className="text-right">{prescription.amount?.toLocaleString()}</Table.Cell>
+                            <Table.Cell>
+                              <Button
+                                color="primary"
+                                size="xs"
+                                onClick={() => {
+                                  save(prescription);
+                                }}
+                              >
+                                選択
+                              </Button>
+                            </Table.Cell>
+                          </Table.Row>
+                        );
+                      })
+                    : fixedPrescriptions.map((prescription, i) => {
+                        return (
+                          <Table.Row size="xs" className="hover:bg-gray-300" key={i}>
+                            <Table.Cell>{prescription.sequence}</Table.Cell>
+                            <Table.Cell className="truncate">{`${prescription.patientName}　${prescription.patientKana}`}</Table.Cell>
+                            <Table.Cell className="text-right">{prescription.amount?.toLocaleString()}</Table.Cell>
+                            <Table.Cell>
+                              <Button color="primary" size="xs" disabled={true}>
+                                選択
+                              </Button>
+                            </Table.Cell>
+                          </Table.Row>
+                        );
+                      })}
                 </Table.Body>
               </Table>
             </div>
@@ -90,6 +143,9 @@ const PrescriptionList: React.FC<Props> = ({ open, onClose }) => {
         </Card>
       </Modal.Body>
       <Modal.Footer className="flex justify-end">
+        <Button variant="outlined" size="sm" className="mr-2" onClick={getPrescriptions}>
+          更新
+        </Button>
         <Button color="secondary" variant="outlined" className="mr-3" onClick={onClose}>
           キャンセル
         </Button>
