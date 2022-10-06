@@ -4,6 +4,12 @@ interface Window {
     printContents: () => Promise<void>;
     updateLocalDb: (shopCode: string) => Promise<void>;
     syncFirestore: (shopCode: string) => Promise<void>;
+    cipher: (plainText: string, key: string) => Promise<any>;
+    decipher: (cipheredText: string, key: string) => Promise<any>;
+    getStore: (key: string, defaultValue?: any) => Promise<any>;
+    setStore: (key: string, value: any) => Promise<void>;
+    findAppSettings: (conds?: string) => Promise<any>;
+    setAppSetting: (key: string, value: any) => Promise<void>;
     findProductByPk: (code: string) => Promise<any>;
     findProducts: (conds?: string) => Promise<any>;
     findProductSellingPriceByPk: (code: string) => Promise<any>;

@@ -2,6 +2,15 @@ import { app } from 'electron';
 
 const userData = app.getPath('userData');
 
+const AppSettingSchema = {
+  name: 'AppSetting',
+  properties: {
+    key: 'string',
+    value: 'string',
+  },
+  primaryKey: 'key',
+};
+
 const ProductSchema = {
   name: 'Product',
   properties: {
@@ -199,6 +208,7 @@ const SyncDateTimeSchema = {
 export const RealmConfig = {
   path: `./pos.realm`,
   schema: [
+    AppSettingSchema,
     ProductSchema,
     ProductSellingPriceSchema,
     SaleSchema,
@@ -212,6 +222,7 @@ export const RealmConfig = {
     ShopSchema,
     SyncDateTimeSchema,
   ],
+  schemaVersion: 1,
 };
 
 export type ProductLocal = {

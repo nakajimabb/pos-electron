@@ -19,6 +19,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   syncFirestore: async (shopCode: string) => {
     return await ipcRenderer.invoke('syncFirestore', shopCode);
   },
+  cipher: async (plainText: string, key: string) => {
+    return await ipcRenderer.invoke('cipher', plainText, key);
+  },
+  decipher: async (cipheredText: string, key: string) => {
+    return await ipcRenderer.invoke('decipher', cipheredText, key);
+  },
+  getStore: async (key: string, defaultValue?: any) => {
+    return await ipcRenderer.invoke('getStore', key, defaultValue);
+  },
+  setStore: async (key: string, value: any) => {
+    await ipcRenderer.invoke('setStore', key, value);
+  },
+  findAppSettings: async (conds?: string) => {
+    return await ipcRenderer.invoke('findAppSettings', conds);
+  },
+  setAppSetting: async (key: string, value: any) => {
+    return await ipcRenderer.invoke('setAppSetting', key, value);
+  },
   findProductByPk: async (code: string) => {
     return await ipcRenderer.invoke('findProductByPk', code);
   },

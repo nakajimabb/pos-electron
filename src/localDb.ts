@@ -52,16 +52,13 @@ import { OTC_DIVISION } from './tools';
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 const MAIL_DOMAIN = '@ebondregister.com';
-let realm: Realm;
-Realm.open(RealmConfig).then((r) => {
-  realm = r;
-});
 
 export const updateLocalDb = async (shopCode: string) => {
   const auth = getAuth(firebaseApp);
   const email = shopCode + MAIL_DOMAIN;
   await signInWithEmailAndPassword(auth, email, 'password');
   const realm = await Realm.open(RealmConfig);
+  const password = realm.objectForPrimaryKey('AppSetting', 'PASSWORD');
 
   const docSnapshot = await getDoc(doc(db, 'shops', shopCode));
   realm.write(() => {
@@ -248,6 +245,7 @@ export const syncFirestore = async (shopCode: string) => {
   const auth = getAuth(firebaseApp);
   const email = shopCode + MAIL_DOMAIN;
   await signInWithEmailAndPassword(auth, email, 'password');
+  const realm = await Realm.open(RealmConfig);
   console.log('syncFirestore');
   runTransaction(db, async (transaction) => {
     console.log('runTransaction');

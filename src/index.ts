@@ -1,8 +1,10 @@
 import { app, BrowserWindow, ipcMain, session } from 'electron';
 import Realm, { Results } from 'realm';
+import ElectronStore from 'electron-store';
 import log from 'electron-log';
 import * as fs from 'fs';
 import * as iconv from 'iconv-lite';
+import * as crypto from 'crypto';
 import { updateLocalDb, syncFirestore } from './localDb';
 import {
   ProductLocal,
@@ -24,6 +26,8 @@ import { Shop, Prescription } from './types';
 // whether you're running in development or production).
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+
+const store = new ElectronStore();
 
 const SIPS_DIR = app.getPath('home') + '/SIPS';
 const SIPS_INDEX_DIR = SIPS_DIR + '/INDEX';
@@ -68,7 +72,12 @@ const createWindow = (): void => {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+  const launched = store.get('LAUNCHED');
+  if (launched) {
+    mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+  } else {
+    mainWindow.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}#/app_setting`);
+  }
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
@@ -133,6 +142,90 @@ ipcMain.handle('updateLocalDb', (event, shopCode) => {
 
 ipcMain.handle('syncFirestore', (event, shopCode) => {
   syncFirestore(shopCode);
+});
+
+const algorithm = 'aes-256-cbc';
+const inputEncoding = 'utf8';
+const outputEncoding = 'hex';
+
+const getSalt = () => {
+  let salt = store.get('SALT');
+  if (!salt) {
+    salt = crypto.randomBytes(16).toString(outputEncoding);
+    store.set('SALT', salt);
+  }
+  return salt.toString();
+};
+
+const getIv = () => {
+  let iv = store.get('IV');
+  if (!iv) {
+    iv = crypto.randomBytes(16).toString(outputEncoding);
+    store.set('IV', iv);
+  }
+  return iv.toString();
+};
+
+ipcMain.handle('cipher', (event, plainText: string, key: string) => {
+  const salt = Buffer.from(getSalt(), outputEncoding);
+  const iv = Buffer.from(getIv(), outputEncoding);
+  const cryptedKey = crypto.scryptSync(key, salt, 32);
+  const cipher = crypto.createCipheriv(algorithm, cryptedKey, iv);
+  let cipheredText = cipher.update(plainText, inputEncoding, outputEncoding);
+  cipheredText += cipher.final(outputEncoding);
+  return cipheredText;
+});
+
+ipcMain.handle('decipher', (event, cipheredText: string, key: string) => {
+  const salt = Buffer.from(getSalt(), outputEncoding);
+  const iv = Buffer.from(getIv(), outputEncoding);
+  const cryptedKey = crypto.scryptSync(key, salt, 32);
+  const decipher = crypto.createDecipheriv(algorithm, cryptedKey, iv);
+  let plainText = decipher.update(cipheredText, outputEncoding, inputEncoding);
+  plainText += decipher.final(inputEncoding);
+  return plainText;
+});
+
+ipcMain.handle('getStore', (event, key, defaultValue?) => {
+  let result: any;
+  if (defaultValue) {
+    result = store.get(key, defaultValue);
+  } else {
+    result = store.get(key);
+  }
+  return result;
+});
+
+ipcMain.handle('setStore', (event, key, value) => {
+  store.set(key, value);
+});
+
+ipcMain.handle('findAppSettings', (event, conds) => {
+  let result: any[] = [];
+  let appSettings = realm.objects<{ key: string; value: string }>('AppSetting');
+  if (conds) {
+    appSettings = appSettings.filtered(conds);
+  }
+  result = appSettings.map((appSetting) => {
+    return {
+      key: appSetting.key,
+      value: appSetting.value,
+    };
+  });
+  return result;
+});
+
+ipcMain.handle('setAppSetting', (event, key, value) => {
+  realm.write(() => {
+    realm.create(
+      'AppSetting',
+      {
+        key,
+        value,
+      },
+      Realm.UpdateMode.Modified
+    );
+  });
 });
 
 ipcMain.handle('findProductByPk', (event, code) => {

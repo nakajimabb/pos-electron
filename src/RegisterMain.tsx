@@ -148,6 +148,7 @@ const RegisterMain: React.FC = () => {
       if (status) {
         setRegisterStatus(status);
         setRegisterClosed(!!status.closedAt);
+        setOpenPrescriptions(!status.closedAt);
       } else {
         setRegisterClosed(true);
       }
@@ -194,9 +195,8 @@ const RegisterMain: React.FC = () => {
     getRegisterStatus();
     getRegisterItems();
     getShortcutItems();
-    setOpenPrescriptions(!registerClosed);
     document.getElementById('productCode')?.focus();
-  }, [getRegisterStatus, getRegisterItems, getShortcutItems, setOpenPrescriptions]);
+  }, [getRegisterStatus, getRegisterItems, getShortcutItems]);
 
   return (
     <div className="flex w-full h-screen">
@@ -467,15 +467,9 @@ const RegisterMain: React.FC = () => {
               {currentShop && `${nameWithCode(currentShop)} \u00A0`}
               {!registerClosed &&
                 `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
-              {currentUser ? (
-                <Link to="/" onClick={logout} className="underline">
-                  ログアウト
-                </Link>
-              ) : (
-                <Link to="/sign_in" className="underline">
-                  ログイン
-                </Link>
-              )}
+              <Link to="/app_setting" className="underline">
+                基本設定
+              </Link>
             </p>
             <div className="p-2">
               <div className="grid grid-cols-4 gap-2">
