@@ -1,7 +1,9 @@
 interface Window {
   electronAPI: {
+    initSipsDir: () => Promise<void>;
     createReceiptWindow: (id: string) => Promise<void>;
     printContents: () => Promise<void>;
+    showOpenFolderDialog: () => Promise<any>;
     updateLocalDb: (shopCode: string) => Promise<void>;
     syncFirestore: (shopCode: string) => Promise<void>;
     cipher: (plainText: string, key: string) => Promise<any>;

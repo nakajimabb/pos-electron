@@ -7,11 +7,17 @@ import { Prescription } from './types';
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  initSipsDir: async () => {
+    await ipcRenderer.invoke('initSipsDir');
+  },
   createReceiptWindow: async (id: string) => {
     await ipcRenderer.invoke('createReceiptWindow', id);
   },
   printContents: async () => {
     await ipcRenderer.invoke('printContents');
+  },
+  showOpenFolderDialog: async () => {
+    return await ipcRenderer.invoke('showOpenFolderDialog');
   },
   updateLocalDb: async (shopCode: string) => {
     return await ipcRenderer.invoke('updateLocalDb', shopCode);

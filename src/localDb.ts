@@ -47,21 +47,24 @@ import {
   SaleDetailLocal,
   SyncDateTime,
 } from './realmConfig';
-import { OTC_DIVISION } from './tools';
+import { MAIL_DOMAIN, OTC_DIVISION } from './tools';
+import { decipher } from './encryption';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
-const MAIL_DOMAIN = '@ebondregister.com';
 
 export const updateLocalDb = async (shopCode: string) => {
   const auth = getAuth(firebaseApp);
   const email = shopCode + MAIL_DOMAIN;
-  await signInWithEmailAndPassword(auth, email, 'password');
   const realm = await Realm.open(RealmConfig);
-  const password = realm.objectForPrimaryKey('AppSetting', 'PASSWORD');
+  const passwordSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'PASSWORD');
+  if (!passwordSetting) return;
+  const password = decipher(passwordSetting.value, `$${shopCode}`);
+  await signInWithEmailAndPassword(auth, email, password);
 
   const docSnapshot = await getDoc(doc(db, 'shops', shopCode));
   realm.write(() => {
+    realm.delete(realm.objects('Shop'));
     const shop = docSnapshot.data() as Shop;
     realm.create<Shop>(
       'Shop',
@@ -89,6 +92,7 @@ export const updateLocalDb = async (shopCode: string) => {
 
   const querySnapshot1 = await getDocs(query(collection(db, 'registerItems'), orderBy('sortOrder')));
   realm.write(() => {
+    realm.delete(realm.objects('RegisterItem'));
     querySnapshot1.forEach((doc) => {
       const registerItem = doc.data() as RegisterItem;
       realm.create<RegisterItemLocal>(
@@ -127,6 +131,7 @@ export const updateLocalDb = async (shopCode: string) => {
   );
 
   realm.write(() => {
+    realm.delete(realm.objects('ShortcutItem'));
     shortcutItemLocals.forEach((shortcutItem) => {
       realm.create<ShortcutItemLocal>('ShortcutItem', shortcutItem, Realm.UpdateMode.Modified);
     });
@@ -134,6 +139,7 @@ export const updateLocalDb = async (shopCode: string) => {
 
   const querySnapshot3 = await getDocs(collection(db, 'products'));
   realm.write(() => {
+    realm.delete(realm.objects('Product'));
     querySnapshot3.forEach((doc) => {
       const product = doc.data() as Product;
       realm.create<ProductLocal>(
@@ -168,6 +174,7 @@ export const updateLocalDb = async (shopCode: string) => {
 
   const querySnapshot4 = await getDocs(collection(db, 'shops', shopCode, 'productSellingPrices'));
   realm.write(() => {
+    realm.delete(realm.objects('ProductSellingPrice'));
     querySnapshot4.forEach((doc) => {
       const productSellingPrice = doc.data() as ProductSellingPrice;
       realm.create<ProductSellingPriceLocal>(
@@ -188,6 +195,7 @@ export const updateLocalDb = async (shopCode: string) => {
 
   const querySnapshot5 = await getDocs(collection(db, 'productBundles'));
   realm.write(() => {
+    realm.delete(realm.objects('ProductBundle'));
     querySnapshot5.forEach((doc) => {
       const productBundle = doc.data() as ProductBundle;
       realm.create<ProductBundleLocal>(
@@ -208,6 +216,7 @@ export const updateLocalDb = async (shopCode: string) => {
 
   const querySnapshot6 = await getDocs(collection(db, 'productBulks'));
   realm.write(() => {
+    realm.delete(realm.objects('ProductBulk'));
     querySnapshot6.forEach((doc) => {
       const productBulk = doc.data() as ProductBulk;
       realm.create<ProductBulkLocal>(
@@ -226,6 +235,7 @@ export const updateLocalDb = async (shopCode: string) => {
 
   const querySnapshot7 = await getDocs(collection(db, 'fixedCostRates'));
   realm.write(() => {
+    realm.delete(realm.objects('FixedCostRate'));
     querySnapshot7.forEach((doc) => {
       const fixedCostRate = doc.data() as FixedCostRate;
       realm.create<FixedCostRateLocal>(
@@ -244,8 +254,11 @@ export const updateLocalDb = async (shopCode: string) => {
 export const syncFirestore = async (shopCode: string) => {
   const auth = getAuth(firebaseApp);
   const email = shopCode + MAIL_DOMAIN;
-  await signInWithEmailAndPassword(auth, email, 'password');
   const realm = await Realm.open(RealmConfig);
+  const passwordSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'PASSWORD');
+  if (!passwordSetting) return;
+  const password = decipher(passwordSetting.value, `$${shopCode}`);
+  await signInWithEmailAndPassword(auth, email, password);
   console.log('syncFirestore');
   runTransaction(db, async (transaction) => {
     console.log('runTransaction');

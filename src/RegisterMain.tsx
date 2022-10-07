@@ -329,6 +329,7 @@ const RegisterMain: React.FC = () => {
                   onClick={() => {
                     if (window.confirm('明細をクリアしてもよろしいですか？')) {
                       setBasketItems([]);
+                      document.getElementById('productCode')?.focus();
                     }
                   }}
                 >
@@ -338,7 +339,7 @@ const RegisterMain: React.FC = () => {
             </Flex>
           </Flex>
 
-          <div className="h-96 overflow-y-scroll">
+          <div className="overflow-y-scroll" style={{ height: '26rem' }}>
             <Table border="row" className="table-fixed w-full text-xs">
               <Table.Head>
                 <Table.Row>
@@ -400,6 +401,7 @@ const RegisterMain: React.FC = () => {
                             setBasketItems(
                               addBundleDiscount(basketItems.filter((item, itemIndex) => index !== itemIndex))
                             );
+                            document.getElementById('productCode')?.focus();
                           }
                         }}
                       >

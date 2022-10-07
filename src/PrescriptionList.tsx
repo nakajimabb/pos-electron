@@ -78,14 +78,14 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
     <Modal open={open} size="none" onClose={onClose} className="w-2/3">
       <Modal.Body>
         <Card className="mx-8 mb-2">
-          <Tabs value={tab} variant="bar" size="sm" onChange={(v) => setTab(v)} className="w-96">
+          <Tabs value={tab} variant="bar" size="sm" onChange={(v) => setTab(v)} className="w-full">
             <Tabs.Tab label="未精算" value="unfixed" />
             <Tabs.Tab label="精算済み" value="fixed" />
           </Tabs>
           <Card.Body className="px-4 py-2">
             {error && <Alert severity="error">{error}</Alert>}
             <div className="overflow-y-scroll" style={{ height: '24rem' }}>
-              <Table border="row" className="table-fixed w-full text-xs">
+              <Table border="row" className="table-fixed w-full text-md">
                 <Table.Head>
                   <Table.Row size="xs">
                     <Table.Cell type="th" className="w-2/12">
