@@ -112,11 +112,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   findSyncDateTimeByPk: async (shopCode: string) => {
     return await ipcRenderer.invoke('findSyncDateTimeByPk', shopCode);
   },
-  getPrescriptions: async () => {
-    return await ipcRenderer.invoke('getPrescriptions');
+  getPrescriptions: async (dateString?: string) => {
+    return await ipcRenderer.invoke('getPrescriptions', dateString);
   },
-  getFixedPrescriptions: async () => {
-    return await ipcRenderer.invoke('getFixedPrescriptions');
+  getFixedPrescriptions: async (dateString?: string) => {
+    return await ipcRenderer.invoke('getFixedPrescriptions', dateString);
   },
   setFixedPrescription: async (prescription: Prescription) => {
     await ipcRenderer.invoke('setFixedPrescription', prescription);

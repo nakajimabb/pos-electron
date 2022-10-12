@@ -5,6 +5,7 @@ import log from 'electron-log';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
+import { format, parse, addDays } from 'date-fns';
 import { updateLocalDb, syncFirestore } from './localDb';
 import {
   ProductLocal,
@@ -34,6 +35,7 @@ let SIPS_DIR: string;
 let SIPS_INDEX_DIR: string;
 let SIPS_DATA_DIR: string;
 let SIPS_FIXED_DIR: string;
+let SIPS_SALES_DIR: string;
 
 let realm: Realm;
 Realm.open(RealmConfig).then((r) => {
@@ -59,6 +61,10 @@ const createWindow = (): void => {
   // and load the index.html of the app.
   const launched = store.get('LAUNCHED');
   if (launched) {
+    initSipsDir();
+    setInterval(() => {
+      syncSales();
+    }, 5 * 60 * 1000);
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
   } else {
     mainWindow.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}#/app_setting`);
@@ -93,13 +99,14 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-ipcMain.handle('initSipsDir', (event) => {
+const initSipsDir = () => {
   const sipsDirSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SIPS_DIR');
   if (sipsDirSetting) {
     SIPS_DIR = sipsDirSetting.value;
     SIPS_INDEX_DIR = path.join(SIPS_DIR, 'INDEX');
     SIPS_DATA_DIR = path.join(SIPS_DIR, 'DATA');
     SIPS_FIXED_DIR = path.join(SIPS_DIR, 'FIXED');
+    SIPS_SALES_DIR = path.join(SIPS_DIR, 'SALES');
     if (!fs.existsSync(SIPS_INDEX_DIR)) {
       fs.mkdirSync(SIPS_INDEX_DIR);
     }
@@ -109,7 +116,81 @@ ipcMain.handle('initSipsDir', (event) => {
     if (!fs.existsSync(SIPS_FIXED_DIR)) {
       fs.mkdirSync(SIPS_FIXED_DIR);
     }
+    if (!fs.existsSync(SIPS_SALES_DIR)) {
+      fs.mkdirSync(SIPS_SALES_DIR);
+    }
   }
+};
+
+const syncSales = () => {
+  console.log('syncSales');
+  const files = fs.readdirSync(SIPS_SALES_DIR);
+  files.forEach((fileName) => {
+    const buffer = fs.readFileSync(path.format({ dir: SIPS_SALES_DIR, base: fileName }));
+    const content = iconv.decode(buffer, 'Shift_JIS');
+    const data = JSON.parse(content);
+    if (data) {
+      const saleExisted = realm.objectForPrimaryKey<SaleLocal>('Sale', data.sale.id);
+      if (!saleExisted) {
+        const sale = data.sale;
+        const saleDetails = data.saleDetails;
+
+        realm.write(() => {
+          realm.create<SaleLocal>('Sale', {
+            id: sale.id,
+            receiptNumber: sale.receiptNumber,
+            shopCode: sale.shopCode,
+            createdAt: sale.createdAt,
+            detailsCount: sale.detailsCount,
+            salesTotal: sale.salesTotal,
+            taxTotal: sale.taxTotal,
+            discountTotal: sale.discountTotal,
+            paymentType: sale.paymentType,
+            cashAmount: sale.cashAmount,
+            salesTaxFreeTotal: sale.salesTaxFreeTotal,
+            salesNormalTotal: sale.salesNormalTotal,
+            salesReducedTotal: sale.salesReducedTotal,
+            taxNormalTotal: sale.taxNormalTotal,
+            taxReducedTotal: sale.taxReducedTotal,
+            status: sale.status,
+          });
+
+          saleDetails.forEach((saleDetail: SaleDetailLocal) => {
+            realm.create<SaleDetailLocal>('SaleDetail', {
+              saleId: saleDetail.saleId,
+              index: saleDetail.index,
+              productCode: saleDetail.productCode,
+              productName: saleDetail.productName,
+              abbr: saleDetail.abbr,
+              kana: saleDetail.kana,
+              note: saleDetail.note,
+              hidden: saleDetail.hidden,
+              unregistered: saleDetail.unregistered,
+              sellingPrice: saleDetail.sellingPrice,
+              costPrice: saleDetail.costPrice,
+              avgCostPrice: saleDetail.avgCostPrice,
+              sellingTaxClass: saleDetail.sellingTaxClass,
+              stockTaxClass: saleDetail.stockTaxClass,
+              sellingTax: saleDetail.sellingTax,
+              stockTax: saleDetail.stockTax,
+              selfMedication: saleDetail.selfMedication,
+              supplierCode: saleDetail.supplierCode,
+              noReturn: saleDetail.noReturn,
+              division: saleDetail.division,
+              quantity: saleDetail.quantity,
+              discount: saleDetail.discount,
+              outputReceipt: saleDetail.outputReceipt,
+              status: saleDetail.status,
+            });
+          });
+        });
+      }
+    }
+  });
+};
+
+ipcMain.handle('initSipsDir', (event) => {
+  initSipsDir();
 });
 
 ipcMain.handle('createReceiptWindow', (event, id) => {
@@ -449,6 +530,15 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
       });
     });
   });
+  const fileName = path.format({ dir: SIPS_SALES_DIR, name: sale.id, ext: '.json' });
+  fs.writeFileSync(fileName, '');
+  var fd = fs.openSync(fileName, 'w');
+
+  const data = { sale, saleDetails };
+  var buf = iconv.encode(JSON.stringify(data), 'Shift_JIS');
+  fs.write(fd, buf, 0, buf.length, (error) => {
+    if (error) console.log(error);
+  });
 });
 
 ipcMain.handle('getRegisterStatus', (event, dateString) => {
@@ -692,9 +782,12 @@ ipcMain.handle('findSyncDateTimeByPk', (event, shopCode) => {
   }
 });
 
-ipcMain.handle('getPrescriptions', (event) => {
+ipcMain.handle('getPrescriptions', (event, dateString) => {
   let result: any[] = [];
-  const files = fs.readdirSync(SIPS_INDEX_DIR);
+  let files = fs.readdirSync(SIPS_INDEX_DIR);
+  if (dateString) {
+    files = files.filter((fileName) => fileName.substring(3, 11) === dateString);
+  }
   files.sort().forEach((fileName) => {
     const buffer = fs.readFileSync(path.format({ dir: SIPS_DATA_DIR, base: fileName }));
     const content = iconv.decode(buffer, 'Shift_JIS');
@@ -747,9 +840,12 @@ ipcMain.handle('getPrescriptions', (event) => {
   return result;
 });
 
-ipcMain.handle('getFixedPrescriptions', (event) => {
+ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
   let result: any[] = [];
-  const files = fs.readdirSync(SIPS_FIXED_DIR);
+  let files = fs.readdirSync(SIPS_FIXED_DIR);
+  if (dateString) {
+    files = files.filter((fileName) => fileName.substring(3, 11) === dateString);
+  }
   files.forEach((fileName) => {
     const buffer = fs.readFileSync(path.format({ dir: SIPS_FIXED_DIR, base: fileName }));
     const content = iconv.decode(buffer, 'Shift_JIS');

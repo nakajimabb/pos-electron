@@ -35,8 +35,8 @@ interface Window {
     getCurrentShop: () => Promise<any>;
     findShopByPk: (shopCode: string) => Promise<any>;
     findSyncDateTimeByPk: (shopCode: string) => Promise<any>;
-    getPrescriptions: () => Promise<any>;
-    getFixedPrescriptions: () => Promise<any>;
+    getPrescriptions: (dateString?: string) => Promise<any>;
+    getFixedPrescriptions: (dateString?: string) => Promise<any>;
     setFixedPrescription: (prescription: Prescription) => Promise<void>;
   };
 }

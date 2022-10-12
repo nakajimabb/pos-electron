@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Card, Flex, Form, Modal, Table, Tabs } from './components';
+import { format } from 'date-fns';
+import { Alert, Button, Card, Modal, Table, Tabs } from './components';
 import firebaseError from './firebaseError';
 import { BasketItem, Prescription } from './types';
 
@@ -19,8 +20,10 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
   const getPrescriptions = async () => {
     try {
       setError('');
-      const prescriptions = (await window.electronAPI.getPrescriptions()) as Prescription[];
-      const fixedPrescriptions = (await window.electronAPI.getFixedPrescriptions()) as Prescription[];
+      const status = await window.electronAPI.getRegisterStatus();
+      const dateString = status ? status.dateString : format(new Date(), 'yyyyMMdd');
+      const prescriptions = (await window.electronAPI.getPrescriptions(dateString)) as Prescription[];
+      const fixedPrescriptions = (await window.electronAPI.getFixedPrescriptions(dateString)) as Prescription[];
       const basketPrescriptions = basketItems.filter((item) => item.prescription).map((item) => item.prescription);
       if (prescriptions) {
         const unfixedPrescriptions = prescriptions.filter((prescription) => {
