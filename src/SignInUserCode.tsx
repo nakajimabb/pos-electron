@@ -3,8 +3,7 @@ import { Alert, Button, Form } from './components';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
-
-const MAIL_DOMAIN = '@ebondregister.com';
+import { MAIL_DOMAIN } from './tools';
 
 const SignInUserCode: React.FC<{ moveTo: string }> = ({ moveTo }) => {
   const [loading, setLoading] = useState<boolean>(false);

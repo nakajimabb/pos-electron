@@ -206,7 +206,7 @@ const SyncDateTimeSchema = {
 };
 
 export const RealmConfig = {
-  path: `./pos.realm`,
+  path: `${userData}/pos.realm`,
   schema: [
     AppSettingSchema,
     ProductSchema,

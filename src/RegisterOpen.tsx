@@ -10,10 +10,12 @@ const RegisterOpen: React.FC = () => {
   const { currentShop } = useAppContext();
   const [error, setError] = useState('');
   const [openDate, setOpenDate] = useState<Date>(new Date());
+  const [loading, setLoading] = useState<boolean>(false);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       const status = await window.electronAPI.getRegisterStatus(format(openDate, 'yyyyMMdd'));
       if (status) {
@@ -33,11 +35,10 @@ const RegisterOpen: React.FC = () => {
         });
       }
       await window.electronAPI.updateLocalDb(currentShop.code);
-      setTimeout(() => {
-        window.location.href = '/main_window';
-      }, 1500);
+      window.location.href = '/main_window';
     } catch (error) {
       setError(error);
+      setLoading(false);
     }
   };
 
@@ -67,7 +68,7 @@ const RegisterOpen: React.FC = () => {
             </div>
 
             <div className="flex justify-center p-4">
-              <Button color="primary" className="w-40" onClick={save}>
+              <Button color="primary" className="w-40" onClick={save} disabled={loading}>
                 OK
               </Button>
             </div>
@@ -75,7 +76,7 @@ const RegisterOpen: React.FC = () => {
         </Card>
         <div className="m-4">
           <Link to="/">
-            <Button color="light" size="sm">
+            <Button color="light" size="sm" disabled={loading}>
               戻る
             </Button>
           </Link>

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
 import { Alert, Button, Card, Flex, Form, Grid } from './components';
+import { MAIL_DOMAIN } from './tools';
 
 const AppSetting: React.FC = () => {
   const [shopCode, setShopCode] = useState<string>('');
@@ -12,7 +13,6 @@ const AppSetting: React.FC = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [launched, setLaunched] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const MAIL_DOMAIN = '@ebondregister.com';
 
   const getAppSettings = async () => {
     const launched = await window.electronAPI.getStore('LAUNCHED', false);

@@ -5,7 +5,7 @@ import log from 'electron-log';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
-import { format, parse, addDays } from 'date-fns';
+import { format, addMonths } from 'date-fns';
 import { updateLocalDb, syncFirestore } from './localDb';
 import {
   ProductLocal,
@@ -62,6 +62,7 @@ const createWindow = (): void => {
   const launched = store.get('LAUNCHED');
   if (launched) {
     initSipsDir();
+    deleteOldSipsFiles();
     setInterval(() => {
       syncSales();
     }, 5 * 60 * 1000);
@@ -71,7 +72,7 @@ const createWindow = (): void => {
   }
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
@@ -120,6 +121,28 @@ const initSipsDir = () => {
       fs.mkdirSync(SIPS_SALES_DIR);
     }
   }
+};
+
+const deleteOldSipsFiles = () => {
+  let indexfiles = fs.readdirSync(SIPS_INDEX_DIR);
+  const dateString = format(addMonths(new Date(), -6), 'yyyyMMdd');
+  indexfiles = indexfiles.filter((fileName) => fileName.substring(3, 11) < dateString);
+  indexfiles.forEach((fileName) => {
+    fs.unlinkSync(path.format({ dir: SIPS_INDEX_DIR, base: fileName }));
+    fs.unlinkSync(path.format({ dir: SIPS_DATA_DIR, base: fileName }));
+  });
+
+  let fixedFiles = fs.readdirSync(SIPS_FIXED_DIR);
+  fixedFiles = fixedFiles.filter((fileName) => fileName.substring(2, 10) < dateString);
+  fixedFiles.forEach((fileName) => {
+    fs.unlinkSync(path.format({ dir: SIPS_FIXED_DIR, base: fileName }));
+  });
+
+  let salesfiles = fs.readdirSync(SIPS_SALES_DIR);
+  salesfiles = salesfiles.filter((fileName) => fileName.substring(0, 8) < dateString);
+  salesfiles.forEach((fileName) => {
+    fs.unlinkSync(path.format({ dir: SIPS_SALES_DIR, base: fileName }));
+  });
 };
 
 const syncSales = () => {
@@ -229,12 +252,12 @@ ipcMain.handle('showOpenFolderDialog', (event) => {
   });
 });
 
-ipcMain.handle('updateLocalDb', (event, shopCode) => {
-  updateLocalDb(shopCode);
+ipcMain.handle('updateLocalDb', async (event, shopCode) => {
+  await updateLocalDb(shopCode);
 });
 
-ipcMain.handle('syncFirestore', (event, shopCode) => {
-  syncFirestore(shopCode);
+ipcMain.handle('syncFirestore', async (event, shopCode) => {
+  await syncFirestore(shopCode);
 });
 
 ipcMain.handle('cipher', (event, plainText: string, key: string) => {
@@ -530,7 +553,7 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
       });
     });
   });
-  const fileName = path.format({ dir: SIPS_SALES_DIR, name: sale.id, ext: '.json' });
+  const fileName = path.format({ dir: SIPS_SALES_DIR, name: format(new Date(), 'yyyyMMdd') + 'sale.id', ext: '.json' });
   fs.writeFileSync(fileName, '');
   var fd = fs.openSync(fileName, 'w');
 
