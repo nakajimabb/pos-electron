@@ -216,6 +216,10 @@ ipcMain.handle('initSipsDir', (event) => {
   initSipsDir();
 });
 
+ipcMain.handle('getPrinters', async (event) => {
+  return await event.sender.getPrintersAsync();
+});
+
 ipcMain.handle('createReceiptWindow', (event, id) => {
   const win = new BrowserWindow({
     show: false,
@@ -227,15 +231,16 @@ ipcMain.handle('createReceiptWindow', (event, id) => {
 });
 
 ipcMain.handle('printContents', (event) => {
-  const printOptions = {
+  const printOptions: Electron.WebContentsPrintOptions = {
     silent: true,
     printBackground: true,
     pageSize: 'A4',
     color: false,
-    margin: {
-      marginType: 'printableArea',
-    },
   };
+  const printerSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'PRINTER');
+  if (printerSetting && printerSetting.value) {
+    printOptions.deviceName = printerSetting.value;
+  }
   event.sender.print(printOptions, (success, failureReason) => {
     if (!success) {
       console.log(failureReason);
@@ -553,7 +558,11 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
       });
     });
   });
-  const fileName = path.format({ dir: SIPS_SALES_DIR, name: format(new Date(), 'yyyyMMdd') + 'sale.id', ext: '.json' });
+  const fileName = path.format({
+    dir: SIPS_SALES_DIR,
+    name: `${format(new Date(), 'yyyyMMdd')}-${sale.id}`,
+    ext: '.json',
+  });
   fs.writeFileSync(fileName, '');
   var fd = fs.openSync(fileName, 'w');
 
@@ -867,7 +876,7 @@ ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
   let result: any[] = [];
   let files = fs.readdirSync(SIPS_FIXED_DIR);
   if (dateString) {
-    files = files.filter((fileName) => fileName.substring(3, 11) === dateString);
+    files = files.filter((fileName) => fileName.substring(2, 10) === dateString);
   }
   files.forEach((fileName) => {
     const buffer = fs.readFileSync(path.format({ dir: SIPS_FIXED_DIR, base: fileName }));

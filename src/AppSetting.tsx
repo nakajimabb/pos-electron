@@ -1,5 +1,6 @@
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
+import { PrinterInfo } from 'electron';
 import { Link } from 'react-router-dom';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
@@ -10,6 +11,8 @@ const AppSetting: React.FC = () => {
   const [shopCode, setShopCode] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [sipsDir, setSipsDir] = useState<string>('');
+  const [printer, setPrinter] = useState<string>('');
+  const [printers, setPrinters] = useState<{ label: string; value: string }[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [launched, setLaunched] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -29,6 +32,24 @@ const AppSetting: React.FC = () => {
     }
     const sipsDirSetting = settings.find((setting) => setting.key === 'SIPS_DIR');
     if (sipsDirSetting) setSipsDir(sipsDirSetting.value);
+    const printerInfos = (await window.electronAPI.getPrinters()) as PrinterInfo[];
+    if (printerInfos) {
+      setPrinters(
+        printerInfos.map((printerInfo) => {
+          return { label: printerInfo.displayName, value: printerInfo.name };
+        })
+      );
+      const printerSetting = settings.find((setting) => setting.key === 'PRINTER');
+      if (printerSetting && printerInfos.find((printerInfo) => printerInfo.name === printerSetting.value)) {
+        setPrinter(printerSetting.value);
+      } else {
+        let defaultPrinterInfo = printerInfos.find((printerInfo) => printerInfo.isDefault);
+        if (!defaultPrinterInfo) {
+          defaultPrinterInfo = printerInfos[0];
+        }
+        setPrinter(defaultPrinterInfo.name);
+      }
+    }
   };
 
   const save = async (e: React.FormEvent) => {
@@ -46,12 +67,16 @@ const AppSetting: React.FC = () => {
     if (!sipsDir.trim()) {
       errorsData.push('SIPSフォルダを入力してください。');
     }
+    if (!printer.trim()) {
+      errorsData.push('プリンターを選択してください。');
+    }
     if (errorsData.length == 0) {
       try {
         await window.electronAPI.setAppSetting('SHOP_CODE', shopCode);
         const encryptedPassword = await window.electronAPI.cipher(password, shopCode);
         await window.electronAPI.setAppSetting('PASSWORD', encryptedPassword);
         await window.electronAPI.setAppSetting('SIPS_DIR', sipsDir);
+        await window.electronAPI.setAppSetting('PRINTER', printer);
         await window.electronAPI.initSipsDir();
         const auth = getAuth(firebaseApp);
         const email = shopCode.slice(1) + MAIL_DOMAIN;
@@ -118,6 +143,13 @@ const AppSetting: React.FC = () => {
                 選択
               </Button>
             </Flex>
+            <Form.Label className="mt-1">プリンター</Form.Label>
+            <Form.Select
+              className="w-4/5"
+              value={printer}
+              options={printers}
+              onChange={(e) => setPrinter(e.target.value)}
+            />
           </Grid>
         </Card.Body>
       </Card>

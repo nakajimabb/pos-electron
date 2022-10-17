@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   initSipsDir: async () => {
     await ipcRenderer.invoke('initSipsDir');
   },
+  getPrinters: async () => {
+    return await ipcRenderer.invoke('getPrinters');
+  },
   createReceiptWindow: async (id: string) => {
     await ipcRenderer.invoke('createReceiptWindow', id);
   },
