@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getAuth, signOut } from 'firebase/auth';
 import { parse } from 'date-fns';
 import { Button, Card, Flex, Form, Grid, Icon, Table } from './components';
 import { Brand } from './components/type';
@@ -21,7 +20,7 @@ const RegisterMain: React.FC = () => {
     product: ProductLocal;
   };
 
-  const { currentUser, currentShop, addBundleDiscount } = useAppContext();
+  const { currentShop, addBundleDiscount } = useAppContext();
   const [productCode, setProductCode] = useState<string>('');
   const [productError, setProductError] = useState<string>('');
   const [basketItemIndex, setBasketItemIndex] = useState<number>(0);
@@ -40,50 +39,31 @@ const RegisterMain: React.FC = () => {
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
-  const logout = () => {
-    if (window.confirm('ログアウトしますか？')) {
-      const auth = getAuth();
-      signOut(auth)
-        .then(function () {
-          // Sign-out successful.
-        })
-        .catch(function (error) {
-          // An error happened.
-          alert('エラーが発生しました。');
-          console.log({ error });
-        });
-    }
-  };
-
   const findProduct = async (code: string) => {
-    try {
-      setProductError('');
-      const product = await window.electronAPI.findProductByPk(code);
-      if (product) {
-        const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
-        if (sellingPrice) {
-          product.sellingPrice = sellingPrice.sellingPrice;
-        }
-        const existingIndex = basketItems.findIndex((item) => item.product.code === code);
-        if (existingIndex >= 0) {
-          basketItems[existingIndex].quantity += 1;
-          setBasketItems(addBundleDiscount(basketItems));
-        } else {
-          const basketItem = {
-            product,
-            division: OTC_DIVISION,
-            outputReceipt: true,
-            quantity: 1,
-          };
-          setBasketItems(addBundleDiscount([...basketItems, basketItem]));
-        }
-        setProductCode('');
-      } else {
-        setProductCode('');
-        setProductError(`${code}：商品の登録がありません。`);
+    setProductError('');
+    const product = await window.electronAPI.findProductByPk(code);
+    if (product) {
+      const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
+      if (sellingPrice) {
+        product.sellingPrice = sellingPrice.sellingPrice;
       }
-    } catch (error) {
-      console.log(error);
+      const existingIndex = basketItems.findIndex((item) => item.product.code === code);
+      if (existingIndex >= 0) {
+        basketItems[existingIndex].quantity += 1;
+        setBasketItems(addBundleDiscount(basketItems));
+      } else {
+        const basketItem = {
+          product,
+          division: OTC_DIVISION,
+          outputReceipt: true,
+          quantity: 1,
+        };
+        setBasketItems(addBundleDiscount([...basketItems, basketItem]));
+      }
+      setProductCode('');
+    } else {
+      setProductCode('');
+      setProductError(`${code}：商品の登録がありません。`);
     }
   };
 
@@ -319,7 +299,7 @@ const RegisterMain: React.FC = () => {
           )}
 
           <Flex className="w-full">
-            <div className="w-1/2 mx-4 my-2 h-4 text-xs text-red-500 font-bold">{productError}</div>
+            <div className="w-1/2 mx-4 my-2 h-6 text-xs text-red-500 font-bold">{productError}</div>
             <Flex justify_content="end" className="w-1/2 pt-2">
               {basketItems.length > 0 ? (
                 <Button
@@ -340,7 +320,7 @@ const RegisterMain: React.FC = () => {
           </Flex>
 
           <div className="overflow-y-scroll" style={{ height: '26rem' }}>
-            <Table border="row" className="table-fixed w-full text-xs">
+            <Table border="row" hover={false} className="table-fixed w-full text-xs">
               <Table.Head>
                 <Table.Row>
                   <Table.Cell type="th" className="w-1/12">
@@ -572,4 +552,5 @@ const RegisterMain: React.FC = () => {
     </div>
   );
 };
+
 export default RegisterMain;

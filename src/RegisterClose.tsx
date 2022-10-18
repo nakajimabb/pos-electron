@@ -6,6 +6,7 @@ import { format, parse } from 'date-fns';
 import { Button, Card, Flex, Form, Progress } from './components';
 import { useAppContext } from './AppContext';
 import { nameWithCode } from './tools';
+import Loader from './components/Loader';
 
 const RegisterClose: React.FC = () => {
   const { currentShop } = useAppContext();
@@ -31,17 +32,17 @@ const RegisterClose: React.FC = () => {
           status.closedAt = new Date();
           await window.electronAPI.setRegisterStatus(status);
         }
-        // const functions = getFunctions(app, 'asia-northeast1');
-        // const result = await httpsCallable(
-        //   functions,
-        //   'sendDailyClosingData'
-        // )({ code: currentShop.code, date: format(closeDate, 'yyyy/MM/dd') });
-        // console.log({ result });
+        if (false) {
+          const functions = getFunctions(app, 'asia-northeast1');
+          const result = await httpsCallable(
+            functions,
+            'sendDailyClosingData'
+          )({ code: currentShop.code, date: format(closeDate, 'yyyy/MM/dd') });
+        }
       }
       setLoading(false);
       window.location.href = '#/daily_cash_report';
     } catch (error) {
-      console.log({ error });
       setLoading(false);
     }
   };
@@ -52,6 +53,7 @@ const RegisterClose: React.FC = () => {
 
   return (
     <Flex direction="col" justify_content="center" align_items="center" className="h-screen">
+      {loading && <Loader />}
       <Card className="container w-1/3 p-2">
         <Card.Body>
           <p className="text-center text-xl mb-4">{currentShop && nameWithCode(currentShop)}</p>
@@ -88,4 +90,5 @@ const RegisterClose: React.FC = () => {
     </Flex>
   );
 };
+
 export default RegisterClose;

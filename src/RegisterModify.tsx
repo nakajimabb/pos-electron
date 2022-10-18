@@ -19,7 +19,6 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
   const { addBundleDiscount } = useAppContext();
 
   useEffect(() => {
-    // setQuantityText(Number(basketItem?.quantity).toString());
     const inputQuantity = document.getElementById('inputQuantity') as HTMLInputElement;
     if (inputQuantity) inputQuantity.value = String(basketItems[itemIndex]?.quantity);
     inputQuantity?.focus();

@@ -6,6 +6,7 @@ import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
 import { Alert, Button, Card, Flex, Form, Grid } from './components';
 import { MAIL_DOMAIN } from './tools';
+import Loader from './components/Loader';
 
 const AppSetting: React.FC = () => {
   const [shopCode, setShopCode] = useState<string>('');
@@ -106,6 +107,7 @@ const AppSetting: React.FC = () => {
 
   return (
     <Flex direction="col" justify_content="center" align_items="center" className="h-screen">
+      {loading && <Loader />}
       <p className="text-lg">基本設定</p>
       <Card className="container justify-center m-2 p-2 w-1/2 bg-blue-100">
         <Card.Body>

@@ -102,7 +102,6 @@ const RegisterPayment: React.FC<Props> = ({
     if (basketItems.some((item) => item.outputReceipt)) {
       await window.electronAPI.createReceiptWindow(sale.id);
     }
-    // await window.electronAPI.syncFirestore(currentShop.code);
   };
 
   const priceNormalTotal = ((items: BasketItem[]) => {

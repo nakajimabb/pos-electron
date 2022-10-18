@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Alert, Button, Card, Modal, Table, Tabs } from './components';
-import firebaseError from './firebaseError';
 import { BasketItem, Prescription } from './types';
 
 type Props = {
@@ -36,8 +35,7 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
       }
       setFixedPrescriptions(fixedPrescriptions);
     } catch (error) {
-      console.log({ error });
-      setError(firebaseError(error));
+      setError(error);
     }
   };
 

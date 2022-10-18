@@ -20,30 +20,30 @@ const ShortcutEdit: React.FC = () => {
   const [itemColor, setItemColor] = useState<Brand | null>('info');
   const [productCode, setProductCode] = useState<string>('');
   const [product, setProduct] = useState<ProductLocal | null>();
+  const [productError, setProductError] = useState<string>('');
   const [shortcuts, setShortcuts] = useState<(Shortcut | null)[]>([]);
   const [openSearch, setOpenSearch] = useState<boolean>(false);
 
   const { theme } = useTheme();
 
   const findProduct = async (code: string) => {
-    try {
-      const product = await window.electronAPI.findProductByPk(code);
-      if (product) {
-        const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
-        if (sellingPrice) {
-          product.sellingPrice = sellingPrice.sellingPrice;
-        }
-        setProduct(product);
-      } else {
-        console.log('no such product');
+    setProductError('');
+    const product = await window.electronAPI.findProductByPk(code);
+    if (product) {
+      const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
+      if (sellingPrice) {
+        product.sellingPrice = sellingPrice.sellingPrice;
       }
-    } catch (error) {
-      console.log(error);
+      setProduct(product);
+    } else {
+      setProductCode('');
+      setProductError(`${code}：商品の登録がありません。`);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setProductError('');
     if (productCode) {
       findProduct(toAscii(productCode));
     }
@@ -147,6 +147,7 @@ const ShortcutEdit: React.FC = () => {
                       color={shortcut ? (shortcut.color as Brand) : 'info'}
                       className={classes.join(' ')}
                       onClick={(e) => {
+                        setProductError('');
                         setItemIndex(index);
                         if (shortcut) {
                           setItemColor(shortcut.color);
@@ -192,9 +193,18 @@ const ShortcutEdit: React.FC = () => {
                           onChange={(e) => setProductCode(e.target.value.trim())}
                         />
                       </Form>
-                      <Button color="light" size="xs" className="ml-4" onClick={() => setOpenSearch(true)}>
+                      <Button
+                        color="light"
+                        size="xs"
+                        className="ml-4"
+                        onClick={() => {
+                          setProductError('');
+                          setOpenSearch(true);
+                        }}
+                      >
                         商品検索
                       </Button>
+                      <div className="ml-4 text-xs text-red-500 font-bold">{productError}</div>
                     </>
                   )}
                 </Flex>

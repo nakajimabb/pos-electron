@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Card, Flex, Form, Modal, Table } from './components';
-import firebaseError from './firebaseError';
 import { ProductLocal, ProductSellingPriceLocal } from './realmConfig';
 
 const PER_PAGE = 10;
@@ -56,8 +55,7 @@ const RegisterSearch: React.FC<Props> = ({ open, setProductCode, findProduct, on
         setProductCount(productLocals.length);
       }
     } catch (error) {
-      console.log({ error });
-      setError(firebaseError(error));
+      setError(error);
     }
   };
 
