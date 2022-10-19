@@ -24,7 +24,7 @@ const RegisterPayment: React.FC<Props> = ({
   setRegisterMode,
   onClose,
 }) => {
-  const { currentShop } = useAppContext();
+  const { currentShop, inputMode } = useAppContext();
   const [cashText, setCashText] = useState<string>('0');
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
@@ -49,6 +49,7 @@ const RegisterPayment: React.FC<Props> = ({
       taxNormalTotal: exclusiveTaxNormalTotal + inclusiveTaxNormalTotal,
       taxReducedTotal: exclusiveTaxReducedTotal + inclusiveTaxReducedTotal,
       status: registerMode,
+      inputMode,
     };
 
     let discountTotal = 0;
@@ -89,15 +90,17 @@ const RegisterPayment: React.FC<Props> = ({
       }
       sale.discountTotal = discountTotal;
     });
-    await Promise.all(
-      basketItems
-        .filter((item) => {
-          return item.division === PATIENT_DIVISION && item.prescription;
-        })
-        .map((item) => {
-          window.electronAPI.setFixedPrescription(item.prescription);
-        })
-    );
+    if (inputMode === 'Normal') {
+      await Promise.all(
+        basketItems
+          .filter((item) => {
+            return item.division === PATIENT_DIVISION && item.prescription;
+          })
+          .map((item) => {
+            window.electronAPI.setFixedPrescription(item.prescription);
+          })
+      );
+    }
     await window.electronAPI.createSaleWithDetails(sale, details);
     if (basketItems.some((item) => item.outputReceipt)) {
       await window.electronAPI.createReceiptWindow(sale.id);

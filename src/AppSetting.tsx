@@ -14,6 +14,7 @@ const AppSetting: React.FC = () => {
   const [sipsDir, setSipsDir] = useState<string>('');
   const [printer, setPrinter] = useState<string>('');
   const [printers, setPrinters] = useState<{ label: string; value: string }[]>([]);
+  const [inputMode, setInputMode] = useState<string>('Normal');
   const [errors, setErrors] = useState<string[]>([]);
   const [launched, setLaunched] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -51,6 +52,8 @@ const AppSetting: React.FC = () => {
         setPrinter(defaultPrinterInfo.name);
       }
     }
+    const inputModeSetting = settings.find((setting) => setting.key === 'INPUT_MODE');
+    if (inputModeSetting) setInputMode(inputModeSetting.value);
   };
 
   const save = async (e: React.FormEvent) => {
@@ -78,6 +81,7 @@ const AppSetting: React.FC = () => {
         await window.electronAPI.setAppSetting('PASSWORD', encryptedPassword);
         await window.electronAPI.setAppSetting('SIPS_DIR', sipsDir);
         await window.electronAPI.setAppSetting('PRINTER', printer);
+        await window.electronAPI.setAppSetting('INPUT_MODE', inputMode);
         await window.electronAPI.initSipsDir();
         const auth = getAuth(firebaseApp);
         const email = shopCode.slice(1) + MAIL_DOMAIN;
@@ -109,9 +113,9 @@ const AppSetting: React.FC = () => {
     <Flex direction="col" justify_content="center" align_items="center" className="h-screen">
       {loading && <Loader />}
       <p className="text-lg">基本設定</p>
-      <Card className="container justify-center m-2 p-2 w-1/2 bg-blue-100">
+      <Card className="m-2 p-2 w-1/2 bg-blue-100">
         <Card.Body>
-          <Grid cols="1 sm:2" gap="0 sm:3" auto_cols="fr" template_cols="1fr 3fr" className="row-end-2">
+          <Grid cols="2" gap="3" auto_cols="fr" template_cols="1fr 3fr" className="row-end-2">
             <Form.Label className="mt-1">店舗番号</Form.Label>
             <Form.Text value={shopCode} required className="w-1/2" onChange={(e) => setShopCode(e.target.value)} />
             <Form.Label className="mt-1">パスワード</Form.Label>
@@ -152,6 +156,27 @@ const AppSetting: React.FC = () => {
               options={printers}
               onChange={(e) => setPrinter(e.target.value)}
             />
+            <Form.Label className="mt-1">入力モード</Form.Label>
+            <Grid cols="3" gap="2" className="mt-1">
+              <Form.Radio
+                id="radio1"
+                name="radio"
+                size="md"
+                label="通常モード"
+                checked={inputMode === 'Normal'}
+                disabled={!launched}
+                onChange={(e) => setInputMode('Normal')}
+              />
+              <Form.Radio
+                id="radio2"
+                name="radio"
+                size="md"
+                label="テストモード"
+                checked={inputMode === 'Test'}
+                disabled={!launched}
+                onChange={(e) => setInputMode('Test')}
+              />
+            </Grid>
           </Grid>
         </Card.Body>
       </Card>

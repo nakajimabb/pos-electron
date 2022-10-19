@@ -12,6 +12,7 @@ interface Window {
     getStore: (key: string, defaultValue?: any) => Promise<any>;
     setStore: (key: string, value: any) => Promise<void>;
     findAppSettings: (conds?: string) => Promise<any>;
+    getAppSetting: (key: string) => Promise<any>;
     setAppSetting: (key: string, value: any) => Promise<void>;
     findProductByPk: (code: string) => Promise<any>;
     findProducts: (conds?: string) => Promise<any>;
@@ -20,7 +21,6 @@ interface Window {
     findSaleByPk: (id: string) => Promise<any>;
     findSales: (conds?: string, ...args: any[]) => Promise<any>;
     findSaleDetails: (conds?: string) => Promise<any>;
-    getReceiptNumber: () => Promise<number>;
     createSaleWithDetails: (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => Promise<void>;
     getRegisterStatus: (dateString?: string) => Promise<any>;
     setRegisterStatus: (status: RegisterStatusLocal) => Promise<void>;

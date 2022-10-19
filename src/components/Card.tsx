@@ -31,9 +31,7 @@ type CardType = React.FC<CardProps> & {
 
 const Card: CardType = ({ className, children }) => {
   return (
-    <div className={clsx('overflow-hidden rounded bg-white border shadow focus:shadow-outline', className)}>
-      {children}
-    </div>
+    <div className={clsx('overflow-hidden rounded border shadow focus:shadow-outline', className)}>{children}</div>
   );
 };
 

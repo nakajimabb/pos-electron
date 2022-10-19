@@ -17,6 +17,7 @@ export type ContextType = {
   productBundles: ProductBundleLocal[];
   productBulks: ProductBulkLocal[];
   fixedCostRates: FixedCostRateLocal[];
+  inputMode: 'Normal' | 'Test';
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
 };
 
@@ -26,6 +27,7 @@ const AppContext = createContext({
   productBundles: [],
   productBulks: [],
   fixedCostRates: [],
+  inputMode: 'Normal',
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
 } as ContextType);
 
@@ -39,6 +41,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
   const [productBundles, setProductBundles] = useState<ProductBundleLocal[]>([]);
   const [productBulks, setProductBulks] = useState<ProductBulkLocal[]>([]);
   const [fixedCostRates, setFixedCostRates] = useState<FixedCostRateLocal[]>([]);
+  const [inputMode, setInputMode] = useState<'Normal' | 'Test'>('Normal');
 
   const getProductBundles = useCallback(async () => {
     const bundles = (await window.electronAPI.findProductBundles()) as ProductBundleLocal[];
@@ -55,11 +58,17 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     setFixedCostRates(rates);
   }, []);
 
+  const getInputMode = useCallback(async () => {
+    const inputModeSetting = await window.electronAPI.getAppSetting('INPUT_MODE');
+    setInputMode(inputModeSetting);
+  }, []);
+
   useEffect(() => {
     getProductBundles();
     getProductBulks();
     getFixedCostRates();
-  }, [getProductBundles, getProductBulks, getFixedCostRates]);
+    getInputMode();
+  }, [getProductBundles, getProductBulks, getFixedCostRates, getInputMode]);
 
   useEffect(() => {
     const getCurrentShop = async () => {
@@ -140,6 +149,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         productBundles,
         productBulks,
         fixedCostRates,
+        inputMode,
         addBundleDiscount,
       }}
     >

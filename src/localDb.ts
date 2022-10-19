@@ -275,7 +275,7 @@ export const syncFirestore = async (shopCode: string) => {
     const q = query(collection(db, 'sales'), ...conds);
     const querySnapshot = await getDocs(q);
     console.log('querySnapshot');
-    const realmConds = `shopCode == '${shopCode}' AND createdAt >= $0`;
+    const realmConds = `shopCode == '${shopCode}' AND inputMode == 'Normal' AND createdAt >= $0`;
     const saleLocals = realm.objects<SaleLocal>('Sale').filtered(realmConds, dateTime);
     await Promise.all(
       saleLocals.map(async (saleLocal) => {
@@ -299,8 +299,7 @@ export const syncFirestore = async (shopCode: string) => {
         const saleRef = doc(collection(db, 'sales'), saleLocal.id);
         const saleExist = await transaction.get(saleRef);
         if (!saleExist.exists()) {
-          console.log('saleExist');
-          // transaction.set(saleRef, sale);
+          transaction.set(saleRef, sale);
           const detailConds = `saleId == '$0'`;
           const saleDetailLocals = realm.objects<SaleDetailLocal>('SaleDetail').filtered(detailConds, saleLocal.id);
           saleDetailLocals.forEach((saleDetailLocal) => {
@@ -342,8 +341,7 @@ export const syncFirestore = async (shopCode: string) => {
               status: saleDetailLocal.status,
             };
             const detailRef = doc(collection(db, 'sales', saleRef.id, 'saleDetails'), saleDetailLocal.index.toString());
-            console.log(detail);
-            // transaction.set(detailRef, detail);
+            transaction.set(detailRef, detail);
 
             if (saleDetailLocal.productCode && saleDetailLocal.division === OTC_DIVISION) {
               const registerSign = detail.status === 'Return' ? -1 : 1;
@@ -363,8 +361,7 @@ export const syncFirestore = async (shopCode: string) => {
                 quantity: increment(incmnt),
                 updatedAt: serverTimestamp(),
               };
-              console.log(data);
-              // transaction.set(ref, data, { merge: true });
+              transaction.set(ref, data, { merge: true });
             }
           });
         }
@@ -395,6 +392,7 @@ export const syncFirestore = async (shopCode: string) => {
               taxNormalTotal: sale.taxNormalTotal,
               taxReducedTotal: sale.taxReducedTotal,
               status: sale.status,
+              inputMode: 'Normal',
             });
             detailsSnapshot.forEach((detailDoc) => {
               const saleDetail = detailDoc.data() as SaleDetail;

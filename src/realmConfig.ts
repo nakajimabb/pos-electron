@@ -263,7 +263,7 @@ export type SaleLocal = {
   salesTotal: number;
   taxTotal: number;
   discountTotal: number;
-  paymentType: 'Cash' | 'Credit';
+  paymentType: 'Cash' | 'Credit' | 'Electronic';
   cashAmount: number;
   salesTaxFreeTotal: number;
   salesNormalTotal: number;
@@ -271,6 +271,7 @@ export type SaleLocal = {
   taxNormalTotal: number;
   taxReducedTotal: number;
   status: 'Sales' | 'Cancel' | 'PartialCancel' | 'Return' | 'PartialReturn';
+  inputMode: 'Normal' | 'Test';
 };
 
 export type SaleDetailLocal = {

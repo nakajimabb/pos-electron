@@ -43,6 +43,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   findAppSettings: async (conds?: string) => {
     return await ipcRenderer.invoke('findAppSettings', conds);
   },
+  getAppSetting: async (key: string) => {
+    return await ipcRenderer.invoke('getAppSetting', key);
+  },
   setAppSetting: async (key: string, value: any) => {
     return await ipcRenderer.invoke('setAppSetting', key, value);
   },
@@ -66,9 +69,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   findSaleDetails: async (conds?: string) => {
     return await ipcRenderer.invoke('findSaleDetails', conds);
-  },
-  getReceiptNumber: async () => {
-    return await ipcRenderer.invoke('getReceiptNumber');
   },
   createSaleWithDetails: async (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => {
     await ipcRenderer.invoke('createSaleWithDetails', sale, saleDetails);

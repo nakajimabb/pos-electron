@@ -158,55 +158,58 @@ const syncSales = () => {
         const sale = data.sale;
         const saleDetails = data.saleDetails;
 
-        realm.write(() => {
-          realm.create<SaleLocal>('Sale', {
-            id: sale.id,
-            receiptNumber: sale.receiptNumber,
-            shopCode: sale.shopCode,
-            createdAt: sale.createdAt,
-            detailsCount: sale.detailsCount,
-            salesTotal: sale.salesTotal,
-            taxTotal: sale.taxTotal,
-            discountTotal: sale.discountTotal,
-            paymentType: sale.paymentType,
-            cashAmount: sale.cashAmount,
-            salesTaxFreeTotal: sale.salesTaxFreeTotal,
-            salesNormalTotal: sale.salesNormalTotal,
-            salesReducedTotal: sale.salesReducedTotal,
-            taxNormalTotal: sale.taxNormalTotal,
-            taxReducedTotal: sale.taxReducedTotal,
-            status: sale.status,
-          });
+        if (sale.inputMode === 'Normal') {
+          realm.write(() => {
+            realm.create<SaleLocal>('Sale', {
+              id: sale.id,
+              receiptNumber: sale.receiptNumber,
+              shopCode: sale.shopCode,
+              createdAt: sale.createdAt,
+              detailsCount: sale.detailsCount,
+              salesTotal: sale.salesTotal,
+              taxTotal: sale.taxTotal,
+              discountTotal: sale.discountTotal,
+              paymentType: sale.paymentType,
+              cashAmount: sale.cashAmount,
+              salesTaxFreeTotal: sale.salesTaxFreeTotal,
+              salesNormalTotal: sale.salesNormalTotal,
+              salesReducedTotal: sale.salesReducedTotal,
+              taxNormalTotal: sale.taxNormalTotal,
+              taxReducedTotal: sale.taxReducedTotal,
+              status: sale.status,
+              inputMode: sale.inputMode,
+            });
 
-          saleDetails.forEach((saleDetail: SaleDetailLocal) => {
-            realm.create<SaleDetailLocal>('SaleDetail', {
-              saleId: saleDetail.saleId,
-              index: saleDetail.index,
-              productCode: saleDetail.productCode,
-              productName: saleDetail.productName,
-              abbr: saleDetail.abbr,
-              kana: saleDetail.kana,
-              note: saleDetail.note,
-              hidden: saleDetail.hidden,
-              unregistered: saleDetail.unregistered,
-              sellingPrice: saleDetail.sellingPrice,
-              costPrice: saleDetail.costPrice,
-              avgCostPrice: saleDetail.avgCostPrice,
-              sellingTaxClass: saleDetail.sellingTaxClass,
-              stockTaxClass: saleDetail.stockTaxClass,
-              sellingTax: saleDetail.sellingTax,
-              stockTax: saleDetail.stockTax,
-              selfMedication: saleDetail.selfMedication,
-              supplierCode: saleDetail.supplierCode,
-              noReturn: saleDetail.noReturn,
-              division: saleDetail.division,
-              quantity: saleDetail.quantity,
-              discount: saleDetail.discount,
-              outputReceipt: saleDetail.outputReceipt,
-              status: saleDetail.status,
+            saleDetails.forEach((saleDetail: SaleDetailLocal) => {
+              realm.create<SaleDetailLocal>('SaleDetail', {
+                saleId: saleDetail.saleId,
+                index: saleDetail.index,
+                productCode: saleDetail.productCode,
+                productName: saleDetail.productName,
+                abbr: saleDetail.abbr,
+                kana: saleDetail.kana,
+                note: saleDetail.note,
+                hidden: saleDetail.hidden,
+                unregistered: saleDetail.unregistered,
+                sellingPrice: saleDetail.sellingPrice,
+                costPrice: saleDetail.costPrice,
+                avgCostPrice: saleDetail.avgCostPrice,
+                sellingTaxClass: saleDetail.sellingTaxClass,
+                stockTaxClass: saleDetail.stockTaxClass,
+                sellingTax: saleDetail.sellingTax,
+                stockTax: saleDetail.stockTax,
+                selfMedication: saleDetail.selfMedication,
+                supplierCode: saleDetail.supplierCode,
+                noReturn: saleDetail.noReturn,
+                division: saleDetail.division,
+                quantity: saleDetail.quantity,
+                discount: saleDetail.discount,
+                outputReceipt: saleDetail.outputReceipt,
+                status: saleDetail.status,
+              });
             });
           });
-        });
+        }
       }
     }
   });
@@ -300,6 +303,15 @@ ipcMain.handle('findAppSettings', (event, conds) => {
     };
   });
   return result;
+});
+
+ipcMain.handle('getAppSetting', (event, key) => {
+  const appSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', key);
+  if (appSetting) {
+    return appSetting.value;
+  } else {
+    return null;
+  }
 });
 
 ipcMain.handle('setAppSetting', (event, key, value) => {
@@ -436,6 +448,7 @@ ipcMain.handle('findSaleByPk', (event, id) => {
       taxNormalTotal: sale.taxNormalTotal,
       taxReducedTotal: sale.taxReducedTotal,
       status: sale.status,
+      inputMode: sale.inputMode,
     };
   } else {
     return null;
@@ -466,6 +479,7 @@ ipcMain.handle('findSales', (event, conds, ...args) => {
       taxNormalTotal: sale.taxNormalTotal,
       taxReducedTotal: sale.taxReducedTotal,
       status: sale.status,
+      inputMode: sale.inputMode,
     };
   });
   return result;
@@ -527,6 +541,7 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
       taxNormalTotal: sale.taxNormalTotal,
       taxReducedTotal: sale.taxReducedTotal,
       status: sale.status,
+      inputMode: sale.inputMode,
     });
 
     saleDetails.forEach((saleDetail: SaleDetailLocal) => {

@@ -7,7 +7,7 @@ import { useAppContext } from './AppContext';
 import { SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
 
 const DailyJournal: React.FC = () => {
-  const { currentShop } = useAppContext();
+  const { currentShop, inputMode } = useAppContext();
   const [completed, setCompleted] = useState<boolean>(false);
   const [sales, setSales] = useState<[string, SaleLocal, SaleDetailLocal[]][]>();
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
@@ -28,7 +28,7 @@ const DailyJournal: React.FC = () => {
     if (completed) return;
     if (!currentShop) return;
     try {
-      let conds = `shopCode == '${currentShop.code}'`;
+      let conds = `shopCode == '${currentShop.code} AND inputMode == '${inputMode}'`;
       let args = [];
       let paramIndex = 0;
 

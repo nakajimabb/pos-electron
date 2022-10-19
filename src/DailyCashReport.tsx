@@ -8,7 +8,7 @@ import { SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
 import { Divisions } from './tools';
 
 const DailyCashReport: React.FC = () => {
-  const { currentShop } = useAppContext();
+  const { currentShop, inputMode } = useAppContext();
   const [completed, setCompleted] = useState<boolean>(false);
   const [reportItems, setReportItems] = useState<{ [code: string]: number }>({});
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
@@ -29,7 +29,7 @@ const DailyCashReport: React.FC = () => {
     if (completed) return;
     if (!currentShop) return;
     try {
-      let conds = `shopCode == '${currentShop.code}'`;
+      let conds = `shopCode == '${currentShop.code} AND inputMode == '${inputMode}'`;
       let args = [];
       let paramIndex = 0;
 

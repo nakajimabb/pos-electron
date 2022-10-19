@@ -20,7 +20,7 @@ const RegisterMain: React.FC = () => {
     product: ProductLocal;
   };
 
-  const { currentShop, addBundleDiscount } = useAppContext();
+  const { currentShop, inputMode, addBundleDiscount } = useAppContext();
   const [productCode, setProductCode] = useState<string>('');
   const [productError, setProductError] = useState<string>('');
   const [basketItemIndex, setBasketItemIndex] = useState<number>(0);
@@ -233,6 +233,9 @@ const RegisterMain: React.FC = () => {
       ></PrescriptionList>
       <Card className="container justify-center m-2 w-1/2">
         <Card.Body>
+          <p className="mt-1 ml-4 text-sm text-red-500 font-bold">
+            {inputMode === 'Test' ? '現在テストモードです。' : '\u00A0'}
+          </p>
           {registerClosed ? (
             <Flex className="mt-8 ml-4">
               <Link to="/register_open">
@@ -245,8 +248,8 @@ const RegisterMain: React.FC = () => {
               </p>
             </Flex>
           ) : (
-            <Flex>
-              <Form className="mt-8 ml-4" onSubmit={handleSubmit}>
+            <Flex className="mt-2">
+              <Form className="ml-4" onSubmit={handleSubmit}>
                 <Form.Text
                   id="productCode"
                   size="md"
@@ -261,7 +264,7 @@ const RegisterMain: React.FC = () => {
                 color="light"
                 size="xs"
                 disabled={registerClosed}
-                className="mt-8 ml-4 w-24"
+                className="ml-4 w-24"
                 onClick={() => setOpenSearch(true)}
               >
                 商品検索
@@ -271,7 +274,7 @@ const RegisterMain: React.FC = () => {
                 color={registerMode === 'Sales' ? 'info' : 'light'}
                 size="xs"
                 disabled={basketItems.length > 0 || registerClosed}
-                className="w-16 mt-8 ml-14"
+                className="w-16 ml-14"
                 onClick={() => setRegisterMode('Sales')}
               >
                 売上
@@ -281,7 +284,7 @@ const RegisterMain: React.FC = () => {
                 color={registerMode === 'Return' ? 'info' : 'light'}
                 size="xs"
                 disabled={basketItems.length > 0 || registerClosed}
-                className="w-16 mt-8"
+                className="w-16"
                 onClick={() => setRegisterMode('Return')}
               >
                 返品
@@ -290,7 +293,7 @@ const RegisterMain: React.FC = () => {
                 color="light"
                 size="xs"
                 disabled={registerClosed}
-                className="mt-8 ml-4 mr-4 w-16"
+                className="ml-4 mr-4 w-16"
                 onClick={() => setOpenPrescriptions(true)}
               >
                 SIPS
@@ -442,113 +445,120 @@ const RegisterMain: React.FC = () => {
           </Flex>
         </Card.Body>
       </Card>
-      {registerItems.length > 0 && shortcuts.length > 0 && (
-        <Card className="m-2 w-1/2">
-          <Card.Body>
-            <p className="mt-1 mr-2 text-sm text-right">
-              {currentShop && `${nameWithCode(currentShop)} \u00A0`}
-              {!registerClosed &&
-                `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
+      <Card className="m-2 w-1/2">
+        <Card.Body>
+          <p className="mt-1 mr-2 text-sm text-right">
+            {currentShop && `${nameWithCode(currentShop)} \u00A0`}
+            {!registerClosed &&
+              `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
+            {basketItems.length === 0 ? (
               <Link to="/app_setting" className="underline">
                 基本設定
               </Link>
-            </p>
-            <div className="p-2">
-              <div className="grid grid-cols-4 gap-2">
-                {registerItems.map((registerItem, index) => (
-                  <Button
-                    variant="contained"
-                    size="xs"
-                    color="info"
-                    disabled={registerClosed}
-                    className="h-14"
-                    onClick={(e) => {
-                      setProductError('');
-                      setRegisterItem(registerItem);
-                      setOpenInput(true);
-                    }}
-                    key={index}
-                  >
-                    {`${registerItem.index}. ${registerItem.name}`}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            ) : (
+              <span className="underline">基本設定</span>
+            )}
+          </p>
 
-            <div className="mt-4 p-2">
-              <div className="grid grid-cols-4 gap-2">
-                <div>
-                  <Link to="/shortcut_edit">
-                    <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
-                      ショートカット登録
-                    </Button>
-                  </Link>
-                </div>
-                <div>
-                  <Link to="/receipt_list">
-                    <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
-                      レシート再発行
-                    </Button>
-                  </Link>
-                </div>
-                <div>
-                  <Link to="/daily_cash_report">
-                    <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
-                      精算・点検レポート
-                    </Button>
-                  </Link>
-                </div>
-                <div>
-                  <Link to="/daily_journal">
-                    <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
-                      ジャーナル
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 p-2">
-              <div className="grid grid-cols-4 gap-2">
-                {shortcuts.map((shortcut, index) => (
-                  <Button
-                    variant={shortcut ? 'contained' : 'outlined'}
-                    size="xs"
-                    color={shortcut ? (shortcut.color as Brand) : 'info'}
-                    className="h-14 truncate"
-                    disabled={!shortcut || registerClosed}
-                    onClick={(e) => {
-                      if (shortcut) {
+          {registerItems.length > 0 && shortcuts.length > 0 && (
+            <>
+              <div className="p-2">
+                <div className="grid grid-cols-4 gap-2">
+                  {registerItems.map((registerItem, index) => (
+                    <Button
+                      variant="contained"
+                      size="xs"
+                      color="info"
+                      disabled={registerClosed}
+                      className="h-14"
+                      onClick={(e) => {
                         setProductError('');
-                        const existingIndex = basketItems.findIndex(
-                          (basketItem) => basketItem.product.code === shortcut.product.code
-                        );
-                        if (existingIndex >= 0) {
-                          basketItems[existingIndex].quantity += 1;
-                          setBasketItems(addBundleDiscount([...basketItems]));
-                        } else {
-                          const basketItem = {
-                            product: shortcut.product,
-                            division: OTC_DIVISION,
-                            outputReceipt: true,
-                            quantity: 1,
-                          };
-                          setBasketItems(addBundleDiscount([...basketItems, basketItem]));
-                        }
-                        document.getElementById('productCode')?.focus();
-                      }
-                    }}
-                    key={index}
-                  >
-                    {shortcut?.product.name}
-                    <br />
-                    {shortcut ? `¥${Number(shortcut.product.sellingPrice).toLocaleString()}` : null}
-                  </Button>
-                ))}
+                        setRegisterItem(registerItem);
+                        setOpenInput(true);
+                      }}
+                      key={index}
+                    >
+                      {`${registerItem.index}. ${registerItem.name}`}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </Card.Body>
-        </Card>
-      )}
+
+              <div className="mt-4 p-2">
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <Link to="/shortcut_edit">
+                      <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
+                        ショートカット登録
+                      </Button>
+                    </Link>
+                  </div>
+                  <div>
+                    <Link to="/receipt_list">
+                      <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
+                        レシート再発行
+                      </Button>
+                    </Link>
+                  </div>
+                  <div>
+                    <Link to="/daily_cash_report">
+                      <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
+                        精算・点検レポート
+                      </Button>
+                    </Link>
+                  </div>
+                  <div>
+                    <Link to="/daily_journal">
+                      <Button color="light" size="xs" disabled={basketItems.length > 0} className="w-full">
+                        ジャーナル
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 p-2">
+                <div className="grid grid-cols-4 gap-2">
+                  {shortcuts.map((shortcut, index) => (
+                    <Button
+                      variant={shortcut ? 'contained' : 'outlined'}
+                      size="xs"
+                      color={shortcut ? (shortcut.color as Brand) : 'info'}
+                      className="h-14 truncate"
+                      disabled={!shortcut || registerClosed}
+                      onClick={(e) => {
+                        if (shortcut) {
+                          setProductError('');
+                          const existingIndex = basketItems.findIndex(
+                            (basketItem) => basketItem.product.code === shortcut.product.code
+                          );
+                          if (existingIndex >= 0) {
+                            basketItems[existingIndex].quantity += 1;
+                            setBasketItems(addBundleDiscount([...basketItems]));
+                          } else {
+                            const basketItem = {
+                              product: shortcut.product,
+                              division: OTC_DIVISION,
+                              outputReceipt: true,
+                              quantity: 1,
+                            };
+                            setBasketItems(addBundleDiscount([...basketItems, basketItem]));
+                          }
+                          document.getElementById('productCode')?.focus();
+                        }
+                      }}
+                      key={index}
+                    >
+                      {shortcut?.product.name}
+                      <br />
+                      {shortcut ? `¥${Number(shortcut.product.sellingPrice).toLocaleString()}` : null}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </Card.Body>
+      </Card>
     </div>
   );
 };

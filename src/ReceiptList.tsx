@@ -8,7 +8,7 @@ import { SaleLocal, SaleDetailLocal } from './realmConfig';
 const MAX_SEARCH = 50;
 
 const ReceiptList: React.FC = () => {
-  const { currentShop } = useAppContext();
+  const { currentShop, inputMode } = useAppContext();
   const [sales, setSales] = useState<[string, SaleLocal, string][]>();
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
   const [dateTimeTo, setDateTimeTo] = useState<Date>();
@@ -18,7 +18,7 @@ const ReceiptList: React.FC = () => {
     if (!currentShop) return;
     try {
       setError('');
-      let conds = `shopCode == '${currentShop.code}'`;
+      let conds = `shopCode == '${currentShop.code} AND inputMode == '${inputMode}'`;
       let args = [];
       let paramIndex = 0;
       if (dateTimeFrom) {
