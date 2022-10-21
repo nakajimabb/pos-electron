@@ -18,7 +18,7 @@ const ReceiptList: React.FC = () => {
     if (!currentShop) return;
     try {
       setError('');
-      let conds = `shopCode == '${currentShop.code} AND inputMode == '${inputMode}'`;
+      let conds = `shopCode == '${currentShop.code}' AND inputMode == '${inputMode}'`;
       let args = [];
       let paramIndex = 0;
       if (dateTimeFrom) {

@@ -29,7 +29,7 @@ const DailyCashReport: React.FC = () => {
     if (completed) return;
     if (!currentShop) return;
     try {
-      let conds = `shopCode == '${currentShop.code} AND inputMode == '${inputMode}'`;
+      let conds = `shopCode == '${currentShop.code}' AND inputMode == '${inputMode}'`;
       let args = [];
       let paramIndex = 0;
 
@@ -59,6 +59,8 @@ const DailyCashReport: React.FC = () => {
       reportItemsData['cashAmountTotal'] = 0;
       reportItemsData['creditCountTotal'] = 0;
       reportItemsData['creditAmountTotal'] = 0;
+      reportItemsData['digitalCountTotal'] = 0;
+      reportItemsData['digitalAmountTotal'] = 0;
       reportItemsData['customerCountTotal'] = 0;
       reportItemsData['customerAmountTotal'] = 0;
       reportItemsData['discountCountTotal'] = 0;
@@ -77,6 +79,8 @@ const DailyCashReport: React.FC = () => {
       reportItemsData['exclusiveTaxReducedCashTotal'] = 0;
       reportItemsData['exclusiveTaxNormalCreditTotal'] = 0;
       reportItemsData['exclusiveTaxReducedCreditTotal'] = 0;
+      reportItemsData['exclusiveTaxNormalDigitalTotal'] = 0;
+      reportItemsData['exclusiveTaxReducedDigitalTotal'] = 0;
       reportItemsData['priceTaxFreeTotal'] = 0;
       Object.keys(Divisions).forEach((division) => {
         reportItemsData[`division${division}CountTotal`] = 0;
@@ -109,6 +113,8 @@ const DailyCashReport: React.FC = () => {
             reportItemsData['cashCountTotal'] += 1;
           } else if (sale.paymentType === 'Credit') {
             reportItemsData['creditCountTotal'] += 1;
+          } else if (sale.paymentType === 'Digital') {
+            reportItemsData['digitalCountTotal'] += 1;
           }
 
           if (sale.discountTotal > 0) {
@@ -127,6 +133,8 @@ const DailyCashReport: React.FC = () => {
               reportItemsData['cashAmountTotal'] += amount;
             } else if (sale.paymentType === 'Credit') {
               reportItemsData['creditAmountTotal'] += amount;
+            } else if (sale.paymentType === 'Digital') {
+              reportItemsData['digitalAmountTotal'] += amount;
             }
             reportItemsData['detailsCountTotal'] += 1;
             reportItemsData[`division${detail.division}CountTotal`] += 1;
@@ -167,6 +175,9 @@ const DailyCashReport: React.FC = () => {
           } else if (sale.paymentType === 'Credit') {
             reportItemsData['exclusiveTaxNormalCreditTotal'] += Math.floor((exclusivePriceNormalTotal * 10) / 100);
             reportItemsData['exclusiveTaxReducedCreditTotal'] += Math.floor((exclusivePriceReducedTotal * 8) / 100);
+          } else if (sale.paymentType === 'Digital') {
+            reportItemsData['exclusiveTaxNormalDigitalTotal'] += Math.floor((exclusivePriceNormalTotal * 10) / 100);
+            reportItemsData['exclusiveTaxReducedDigitalTotal'] += Math.floor((exclusivePriceReducedTotal * 8) / 100);
           }
 
           if (sale.status === 'Return') {
@@ -318,6 +329,16 @@ const DailyCashReport: React.FC = () => {
                       </Table.Cell>
                     </Table.Row>
                     <Table.Row>
+                      <Table.Cell className="w-2/3">電子マネー在高</Table.Cell>
+                      <Table.Cell className="text-right w-1/3">
+                        {`¥${(
+                          reportItems['digitalAmountTotal'] +
+                          reportItems['exclusiveTaxNormalDigitalTotal'] +
+                          reportItems['exclusiveTaxReducedDigitalTotal']
+                        )?.toLocaleString()}`}
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
                       <Table.Cell className="w-2/3">客数</Table.Cell>
                       <Table.Cell className="text-right w-1/3">
                         {`${reportItems['customerCountTotal']?.toLocaleString()}`}
@@ -458,6 +479,26 @@ const DailyCashReport: React.FC = () => {
                           reportItems['creditAmountTotal'] +
                           reportItems['exclusiveTaxNormalCreditTotal'] +
                           reportItems['exclusiveTaxReducedCreditTotal']
+                        )?.toLocaleString()}`}
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell className="w-2/3">電子マネー</Table.Cell>
+                      <Table.Cell className="text-right w-1/3"></Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell className="w-2/3">　回数</Table.Cell>
+                      <Table.Cell className="text-right w-1/3">
+                        {`${reportItems['digitalCountTotal']?.toLocaleString()}`}
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell className="w-2/3">　金額</Table.Cell>
+                      <Table.Cell className="text-right w-1/3">
+                        {`¥${(
+                          reportItems['digitalAmountTotal'] +
+                          reportItems['exclusiveTaxNormalDigitalTotal'] +
+                          reportItems['exclusiveTaxReducedDigitalTotal']
                         )?.toLocaleString()}`}
                       </Table.Cell>
                     </Table.Row>

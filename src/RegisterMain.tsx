@@ -34,7 +34,7 @@ const RegisterMain: React.FC = () => {
   const [openSearch, setOpenSearch] = useState<boolean>(false);
   const [openPrescriptions, setOpenPrescriptions] = useState<boolean>(false);
   const [registerMode, setRegisterMode] = useState<'Sales' | 'Return'>('Sales');
-  const [paymentType, setPaymentType] = useState<'Cash' | 'Credit'>('Cash');
+  const [paymentType, setPaymentType] = useState<'Cash' | 'Credit' | 'Digital'>('Cash');
   const [registerClosed, setRegisterClosed] = useState<boolean>(false);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const registerSign = registerMode === 'Return' ? -1 : 1;
@@ -398,7 +398,7 @@ const RegisterMain: React.FC = () => {
           </div>
 
           <Flex className="mt-4">
-            <Table border="cell" className="table-fixed w-3/5">
+            <Table border="cell" className="table-fixed w-1/2">
               <Table.Body>
                 <Table.Row>
                   <Table.Cell type="th" className="text-xl bg-red-100">
@@ -414,8 +414,8 @@ const RegisterMain: React.FC = () => {
                 </Table.Row>
               </Table.Body>
             </Table>
-            <div className="mt-1 ml-4">
-              <Grid cols="2" gap="2">
+            <div className="mt-1 ml-4 w-1/2">
+              <Grid cols="3" gap="2">
                 <Button
                   color="info"
                   size="xs"
@@ -438,7 +438,23 @@ const RegisterMain: React.FC = () => {
                     setOpenPayment(true);
                   }}
                 >
-                  クレジット会計
+                  クレジット
+                  <br />
+                  会計
+                </Button>
+                <Button
+                  color="warning"
+                  size="xs"
+                  disabled={basketItems.length === 0}
+                  className="h-20"
+                  onClick={() => {
+                    setPaymentType('Digital');
+                    setOpenPayment(true);
+                  }}
+                >
+                  電子マネー
+                  <br />
+                  会計
                 </Button>
               </Grid>
             </div>

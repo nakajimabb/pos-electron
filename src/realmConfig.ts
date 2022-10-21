@@ -67,6 +67,7 @@ const SaleSchema = {
     taxNormalTotal: 'int',
     taxReducedTotal: 'int',
     status: 'string',
+    inputMode: 'string',
   },
   primaryKey: 'id',
 };
@@ -263,7 +264,7 @@ export type SaleLocal = {
   salesTotal: number;
   taxTotal: number;
   discountTotal: number;
-  paymentType: 'Cash' | 'Credit' | 'Electronic';
+  paymentType: 'Cash' | 'Credit' | 'Digital';
   cashAmount: number;
   salesTaxFreeTotal: number;
   salesNormalTotal: number;

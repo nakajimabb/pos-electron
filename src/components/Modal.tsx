@@ -17,7 +17,7 @@ const ModalHeader: React.FC<HeaderProps> = ({ centered = false, padding = 3, onC
   return (
     <h1
       className={clsx(
-        'bg-white border text-lg leading-6 font-medium text-gray-900',
+        'border text-lg leading-6 font-medium text-gray-900',
         `p-${padding}`,
         centered && 'text-center',
         className
