@@ -52,31 +52,23 @@ const ShortcutEdit: React.FC = () => {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentShop) return;
-    try {
-      if (itemIndex != null) {
-        const item = { color: itemColor, index: itemIndex, productCode };
-        await window.electronAPI.setShortcutItem(item);
-        setProduct(null);
-        setProductCode('');
-        setItemIndex(null);
-      }
-    } catch (error) {
-      console.log({ error });
+    if (itemIndex != null) {
+      const item = { color: itemColor, index: itemIndex, productCode };
+      await window.electronAPI.setShortcutItem(item);
+      setProduct(null);
+      setProductCode('');
+      setItemIndex(null);
     }
   };
 
   const remove = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentShop) return;
-    try {
-      if (itemIndex != null) {
-        await window.electronAPI.deleteShortcutItem(itemIndex);
-        setProduct(null);
-        setProductCode('');
-        setItemIndex(null);
-      }
-    } catch (error) {
-      console.log({ error });
+    if (itemIndex != null) {
+      await window.electronAPI.deleteShortcutItem(itemIndex);
+      setProduct(null);
+      setProductCode('');
+      setItemIndex(null);
     }
   };
 

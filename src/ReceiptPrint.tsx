@@ -13,22 +13,17 @@ const ReceiptPrint: React.FC = () => {
 
   useEffect(() => {
     const querySales = async () => {
-      try {
-        const query = new URLSearchParams(params);
-        const id = query.get('id');
-        console.log(id);
-        const saleLocal = await window.electronAPI.findSaleByPk(id);
-        if (saleLocal) {
-          setSale(saleLocal);
-          const saleDetailLocals = (await window.electronAPI.findSaleDetails(
-            `saleId == '${saleLocal.id}'`
-          )) as SaleDetailLocal[];
-          setSaleDetails(saleDetailLocals);
-          const shopData = await window.electronAPI.findShopByPk(saleLocal.shopCode);
-          setShop(shopData);
-        }
-      } catch (error) {
-        console.log({ error });
+      const query = new URLSearchParams(params);
+      const id = query.get('id');
+      const saleLocal = await window.electronAPI.findSaleByPk(id);
+      if (saleLocal) {
+        setSale(saleLocal);
+        const saleDetailLocals = (await window.electronAPI.findSaleDetails(
+          `saleId == '${saleLocal.id}'`
+        )) as SaleDetailLocal[];
+        setSaleDetails(saleDetailLocals);
+        const shopData = await window.electronAPI.findShopByPk(saleLocal.shopCode);
+        setShop(shopData);
       }
     };
     querySales();

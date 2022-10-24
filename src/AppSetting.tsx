@@ -88,7 +88,7 @@ const AppSetting: React.FC = () => {
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
             window.electronAPI.setStore('LAUNCHED', '1');
-            window.location.href = '/main_window';
+            window.location.href = 'http://localhost:3000/main_window';
           })
           .catch((error) => {
             console.log({ error });

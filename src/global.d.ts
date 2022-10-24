@@ -5,8 +5,8 @@ interface Window {
     createReceiptWindow: (id: string) => Promise<void>;
     printContents: () => Promise<void>;
     showOpenFolderDialog: () => Promise<any>;
-    updateLocalDb: (shopCode: string) => Promise<void>;
-    syncFirestore: (shopCode: string) => Promise<void>;
+    updateLocalDb: () => Promise<void>;
+    syncFirestore: () => Promise<void>;
     cipher: (plainText: string, key: string) => Promise<any>;
     decipher: (cipheredText: string, key: string) => Promise<any>;
     getStore: (key: string, defaultValue?: any) => Promise<any>;

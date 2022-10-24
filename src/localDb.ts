@@ -1,5 +1,4 @@
 import { initializeApp } from 'firebase/app';
-import { startOfDay } from 'date-fns';
 import { firebaseConfig } from './firebaseConfig';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import {
@@ -53,10 +52,13 @@ import { decipher } from './encryption';
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-export const updateLocalDb = async (shopCode: string) => {
+export const updateLocalDb = async () => {
   const auth = getAuth(firebaseApp);
-  const email = shopCode + MAIL_DOMAIN;
   const realm = await Realm.open(RealmConfig);
+  const shopCodeSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SHOP_CODE');
+  if (!shopCodeSetting) return;
+  const shopCode = shopCodeSetting.value.slice(1);
+  const email = shopCode + MAIL_DOMAIN;
   const passwordSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'PASSWORD');
   if (!passwordSetting) return;
   const password = decipher(passwordSetting.value, `$${shopCode}`);
@@ -113,29 +115,29 @@ export const updateLocalDb = async (shopCode: string) => {
     });
   });
 
-  const querySnapshot2 = await getDocs(collection(db, 'shops', shopCode, 'shortcutItems'));
-  const shortcutItemLocals = new Array<ShortcutItemLocal>();
-  await Promise.all(
-    querySnapshot2.docs.map(async (doc) => {
-      const shortcutItem = doc.data() as ShortcutItem;
-      const productSnap = await getDoc(shortcutItem.productRef);
-      if (productSnap.exists()) {
-        const product = productSnap.data() as Product;
-        shortcutItemLocals.push({
-          index: shortcutItem.index,
-          color: shortcutItem.color,
-          productCode: product.code,
-        });
-      }
-    })
-  );
+  // const querySnapshot2 = await getDocs(collection(db, 'shops', shopCode, 'shortcutItems'));
+  // const shortcutItemLocals = new Array<ShortcutItemLocal>();
+  // await Promise.all(
+  //   querySnapshot2.docs.map(async (doc) => {
+  //     const shortcutItem = doc.data() as ShortcutItem;
+  //     const productSnap = await getDoc(shortcutItem.productRef);
+  //     if (productSnap.exists()) {
+  //       const product = productSnap.data() as Product;
+  //       shortcutItemLocals.push({
+  //         index: shortcutItem.index,
+  //         color: shortcutItem.color,
+  //         productCode: product.code,
+  //       });
+  //     }
+  //   })
+  // );
 
-  realm.write(() => {
-    realm.delete(realm.objects('ShortcutItem'));
-    shortcutItemLocals.forEach((shortcutItem) => {
-      realm.create<ShortcutItemLocal>('ShortcutItem', shortcutItem, Realm.UpdateMode.Modified);
-    });
-  });
+  // realm.write(() => {
+  //   realm.delete(realm.objects('ShortcutItem'));
+  //   shortcutItemLocals.forEach((shortcutItem) => {
+  //     realm.create<ShortcutItemLocal>('ShortcutItem', shortcutItem, Realm.UpdateMode.Modified);
+  //   });
+  // });
 
   const querySnapshot3 = await getDocs(collection(db, 'products'));
   realm.write(() => {
@@ -251,30 +253,32 @@ export const updateLocalDb = async (shopCode: string) => {
   });
 };
 
-export const syncFirestore = async (shopCode: string) => {
+export const syncFirestore = async () => {
   const auth = getAuth(firebaseApp);
-  const email = shopCode + MAIL_DOMAIN;
   const realm = await Realm.open(RealmConfig);
+  const shopCodeSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SHOP_CODE');
+  if (!shopCodeSetting) return;
+  const shopCode = shopCodeSetting.value.slice(1);
+  const email = shopCode + MAIL_DOMAIN;
   const passwordSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'PASSWORD');
   if (!passwordSetting) return;
   const password = decipher(passwordSetting.value, `$${shopCode}`);
   await signInWithEmailAndPassword(auth, email, password);
   console.log('syncFirestore');
   runTransaction(db, async (transaction) => {
-    console.log('runTransaction');
     let dateTime = new Date();
     const syncDateTime = realm.objectForPrimaryKey<SyncDateTime>('SyncDateTime', shopCode);
     if (syncDateTime && syncDateTime.updatedAt) {
       dateTime = syncDateTime.updatedAt;
     }
-    const syncStartAt = startOfDay(new Date());
+    const syncStartAt = new Date();
+    syncStartAt.setHours(0, 0, 0, 0);
     const conds: QueryConstraint[] = [];
     conds.push(where('shopCode', '==', shopCode));
     conds.push(where('createdAt', '>=', dateTime));
     conds.push(orderBy('createdAt', 'desc'));
     const q = query(collection(db, 'sales'), ...conds);
     const querySnapshot = await getDocs(q);
-    console.log('querySnapshot');
     const realmConds = `shopCode == '${shopCode}' AND inputMode == 'Normal' AND createdAt >= $0`;
     const saleLocals = realm.objects<SaleLocal>('Sale').filtered(realmConds, dateTime);
     await Promise.all(

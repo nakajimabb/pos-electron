@@ -92,8 +92,11 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
                     <Table.Cell type="th" className="w-2/12">
                       受付番号
                     </Table.Cell>
-                    <Table.Cell type="th" className="w-6/12">
+                    <Table.Cell type="th" className="w-3/12">
                       患者名
+                    </Table.Cell>
+                    <Table.Cell type="th" className="w-3/12">
+                      フリガナ
                     </Table.Cell>
                     <Table.Cell type="th" className="w-2/12">
                       金額
@@ -107,7 +110,8 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
                         return (
                           <Table.Row size="xs" className="hover:bg-gray-300" key={i}>
                             <Table.Cell>{prescription.sequence}</Table.Cell>
-                            <Table.Cell className="truncate">{`${prescription.patientName}　${prescription.patientKana}`}</Table.Cell>
+                            <Table.Cell className="truncate">{prescription.patientName}</Table.Cell>
+                            <Table.Cell className="truncate">{prescription.patientKana}</Table.Cell>
                             <Table.Cell className="text-right">{prescription.amount?.toLocaleString()}</Table.Cell>
                             <Table.Cell>
                               <Button
@@ -127,7 +131,8 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
                         return (
                           <Table.Row size="xs" className="hover:bg-gray-300" key={i}>
                             <Table.Cell>{prescription.sequence}</Table.Cell>
-                            <Table.Cell className="truncate">{`${prescription.patientName}　${prescription.patientKana}`}</Table.Cell>
+                            <Table.Cell className="truncate">{prescription.patientName}</Table.Cell>
+                            <Table.Cell className="truncate">{prescription.patientKana}</Table.Cell>
                             <Table.Cell className="text-right">{prescription.amount?.toLocaleString()}</Table.Cell>
                             <Table.Cell>
                               <Button color="primary" size="xs" disabled={true}>

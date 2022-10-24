@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import Realm from 'realm';
 import ElectronStore from 'electron-store';
-import log from 'electron-log';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
@@ -58,18 +57,29 @@ const createWindow = (): void => {
     },
   });
 
+  mainWindow.setMenuBarVisibility(false);
+
   // and load the index.html of the app.
   const launched = store.get('LAUNCHED');
   if (launched) {
     initSipsDir();
     deleteOldSipsFiles();
-    setInterval(() => {
-      syncSales();
-    }, 5 * 60 * 1000);
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
   } else {
     mainWindow.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}#/app_setting`);
   }
+
+  setInterval(() => {
+    const launched = store.get('LAUNCHED');
+    if (launched) {
+      try {
+        syncSales();
+        syncFirestore();
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  }, 5 * 60 * 1000);
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
@@ -260,12 +270,12 @@ ipcMain.handle('showOpenFolderDialog', (event) => {
   });
 });
 
-ipcMain.handle('updateLocalDb', async (event, shopCode) => {
-  await updateLocalDb(shopCode);
+ipcMain.handle('updateLocalDb', async (event) => {
+  await updateLocalDb();
 });
 
-ipcMain.handle('syncFirestore', async (event, shopCode) => {
-  await syncFirestore(shopCode);
+ipcMain.handle('syncFirestore', async (event) => {
+  await syncFirestore();
 });
 
 ipcMain.handle('cipher', (event, plainText: string, key: string) => {
@@ -417,15 +427,6 @@ ipcMain.handle('findProductSellingPrices', (event, conds) => {
     };
   });
   return result;
-});
-
-ipcMain.handle('getReceiptNumber', (event) => {
-  let sales = realm.objects<SaleLocal>('Sale').sorted('receiptNumber', true);
-  if (sales.length > 0) {
-    return sales[0].receiptNumber + 1;
-  } else {
-    return 1;
-  }
 });
 
 ipcMain.handle('findSaleByPk', (event, id) => {

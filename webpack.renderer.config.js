@@ -13,12 +13,5 @@ module.exports = {
   plugins: plugins,
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css'],
-    fallback: {
-      process: require.resolve('process/browser'),
-      assert: require.resolve('assert'),
-      stream: require.resolve('stream-browserify'),
-      util: require.resolve('util'),
-      zlib: require.resolve('browserify-zlib'),
-    },
   },
 };

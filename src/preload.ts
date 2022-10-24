@@ -22,11 +22,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showOpenFolderDialog: async () => {
     return await ipcRenderer.invoke('showOpenFolderDialog');
   },
-  updateLocalDb: async (shopCode: string) => {
-    return await ipcRenderer.invoke('updateLocalDb', shopCode);
+  updateLocalDb: async () => {
+    await ipcRenderer.invoke('updateLocalDb');
   },
-  syncFirestore: async (shopCode: string) => {
-    return await ipcRenderer.invoke('syncFirestore', shopCode);
+  syncFirestore: async () => {
+    await ipcRenderer.invoke('syncFirestore');
   },
   cipher: async (plainText: string, key: string) => {
     return await ipcRenderer.invoke('cipher', plainText, key);
@@ -47,7 +47,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return await ipcRenderer.invoke('getAppSetting', key);
   },
   setAppSetting: async (key: string, value: any) => {
-    return await ipcRenderer.invoke('setAppSetting', key, value);
+    await ipcRenderer.invoke('setAppSetting', key, value);
   },
   findProductByPk: async (code: string) => {
     return await ipcRenderer.invoke('findProductByPk', code);
@@ -77,7 +77,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return await ipcRenderer.invoke('getRegisterStatus', dateString);
   },
   setRegisterStatus: async (status: RegisterStatusLocal) => {
-    return await ipcRenderer.invoke('setRegisterStatus', status);
+    await ipcRenderer.invoke('setRegisterStatus', status);
   },
   findRegisterItemByPk: async (index: number) => {
     return await ipcRenderer.invoke('findRegisterItemByPk', index);
@@ -92,10 +92,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return await ipcRenderer.invoke('findShortcutItems', conds);
   },
   setShortcutItem: async (shortcutItem: ShortcutItemLocal) => {
-    return await ipcRenderer.invoke('setShortcutItem', shortcutItem);
+    await ipcRenderer.invoke('setShortcutItem', shortcutItem);
   },
   deleteShortcutItem: async (index: number) => {
-    return await ipcRenderer.invoke('deleteShortcutItem', index);
+    await ipcRenderer.invoke('deleteShortcutItem', index);
   },
   findProductBundles: async (conds?: string) => {
     return await ipcRenderer.invoke('findProductBundles', conds);
