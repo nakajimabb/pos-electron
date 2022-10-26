@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   syncFirestore: async () => {
     await ipcRenderer.invoke('syncFirestore');
   },
+  syncSales: async () => {
+    await ipcRenderer.invoke('syncSales');
+  },
   cipher: async (plainText: string, key: string) => {
     return await ipcRenderer.invoke('cipher', plainText, key);
   },

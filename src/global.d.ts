@@ -7,6 +7,7 @@ interface Window {
     showOpenFolderDialog: () => Promise<any>;
     updateLocalDb: () => Promise<void>;
     syncFirestore: () => Promise<void>;
+    syncSales: () => Promise<void>;
     cipher: (plainText: string, key: string) => Promise<any>;
     decipher: (cipheredText: string, key: string) => Promise<any>;
     getStore: (key: string, defaultValue?: any) => Promise<any>;

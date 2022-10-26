@@ -70,9 +70,6 @@ const AppSetting: React.FC = () => {
     if (!password) {
       errorsData.push('パスワードを入力してください。');
     }
-    if (!sipsDir.trim()) {
-      errorsData.push('SIPSフォルダを入力してください。');
-    }
     if (!printer.trim()) {
       errorsData.push('プリンターを選択してください。');
     }
@@ -120,7 +117,12 @@ const AppSetting: React.FC = () => {
         <Card.Body>
           <Grid cols="2" gap="3" auto_cols="fr" template_cols="1fr 3fr" className="row-end-2">
             <Form.Label className="mt-1">店舗番号</Form.Label>
-            <Form.Text value={shopCode} required className="w-1/2" onChange={(e) => setShopCode(e.target.value)} />
+            <Form.Text
+              value={shopCode}
+              className="w-1/2"
+              disabled={launched && !!shopCode}
+              onChange={(e) => setShopCode(e.target.value)}
+            />
             <Form.Label className="mt-1">パスワード</Form.Label>
             <Form.Password
               value={password}

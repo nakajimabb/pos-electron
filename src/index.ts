@@ -112,7 +112,7 @@ app.on('activate', () => {
 
 const initSipsDir = () => {
   const sipsDirSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SIPS_DIR');
-  if (sipsDirSetting) {
+  if (sipsDirSetting && sipsDirSetting.value.length > 0) {
     SIPS_DIR = sipsDirSetting.value;
     SIPS_INDEX_DIR = path.join(SIPS_DIR, 'INDEX');
     SIPS_DATA_DIR = path.join(SIPS_DIR, 'DATA');
@@ -130,12 +130,19 @@ const initSipsDir = () => {
     if (!fs.existsSync(SIPS_SALES_DIR)) {
       fs.mkdirSync(SIPS_SALES_DIR);
     }
+  } else {
+    SIPS_DIR = '';
+    SIPS_INDEX_DIR = '';
+    SIPS_DATA_DIR = '';
+    SIPS_FIXED_DIR = '';
+    SIPS_SALES_DIR = '';
   }
 };
 
 const deleteOldSipsFiles = () => {
+  if (!SIPS_INDEX_DIR) return;
   let indexfiles = fs.readdirSync(SIPS_INDEX_DIR);
-  const dateString = format(addMonths(new Date(), -6), 'yyyyMMdd');
+  const dateString = format(addMonths(new Date(), -1), 'yyyyMMdd');
   indexfiles = indexfiles.filter((fileName) => fileName.substring(3, 11) < dateString);
   indexfiles.forEach((fileName) => {
     fs.unlinkSync(path.format({ dir: SIPS_INDEX_DIR, base: fileName }));
@@ -156,6 +163,7 @@ const deleteOldSipsFiles = () => {
 };
 
 const syncSales = () => {
+  if (!SIPS_SALES_DIR) return;
   console.log('syncSales');
   const files = fs.readdirSync(SIPS_SALES_DIR);
   files.forEach((fileName) => {
@@ -276,6 +284,10 @@ ipcMain.handle('updateLocalDb', async (event) => {
 
 ipcMain.handle('syncFirestore', async (event) => {
   await syncFirestore();
+});
+
+ipcMain.handle('syncSales', async (event) => {
+  syncSales();
 });
 
 ipcMain.handle('cipher', (event, plainText: string, key: string) => {
@@ -574,19 +586,21 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
       });
     });
   });
-  const fileName = path.format({
-    dir: SIPS_SALES_DIR,
-    name: `${format(new Date(), 'yyyyMMdd')}-${sale.id}`,
-    ext: '.json',
-  });
-  fs.writeFileSync(fileName, '');
-  var fd = fs.openSync(fileName, 'w');
+  if (SIPS_SALES_DIR) {
+    const fileName = path.format({
+      dir: SIPS_SALES_DIR,
+      name: `${format(new Date(), 'yyyyMMdd')}-${sale.id}`,
+      ext: '.json',
+    });
+    fs.writeFileSync(fileName, '');
+    var fd = fs.openSync(fileName, 'w');
 
-  const data = { sale, saleDetails };
-  var buf = iconv.encode(JSON.stringify(data), 'Shift_JIS');
-  fs.write(fd, buf, 0, buf.length, (error) => {
-    if (error) console.log(error);
-  });
+    const data = { sale, saleDetails };
+    var buf = iconv.encode(JSON.stringify(data), 'Shift_JIS');
+    fs.write(fd, buf, 0, buf.length, (error) => {
+      if (error) console.log(error);
+    });
+  }
 });
 
 ipcMain.handle('getRegisterStatus', (event, dateString) => {
@@ -832,6 +846,7 @@ ipcMain.handle('findSyncDateTimeByPk', (event, shopCode) => {
 
 ipcMain.handle('getPrescriptions', (event, dateString) => {
   let result: any[] = [];
+  if (!SIPS_INDEX_DIR) return result;
   let files = fs.readdirSync(SIPS_INDEX_DIR);
   if (dateString) {
     files = files.filter((fileName) => fileName.substring(3, 11) === dateString);
@@ -890,6 +905,7 @@ ipcMain.handle('getPrescriptions', (event, dateString) => {
 
 ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
   let result: any[] = [];
+  if (!SIPS_FIXED_DIR) return result;
   let files = fs.readdirSync(SIPS_FIXED_DIR);
   if (dateString) {
     files = files.filter((fileName) => fileName.substring(2, 10) === dateString);
@@ -920,6 +936,7 @@ ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
 });
 
 ipcMain.handle('setFixedPrescription', (event, prescription: Prescription) => {
+  if (!SIPS_FIXED_DIR) return;
   const fileName = path.format({ dir: SIPS_FIXED_DIR, name: prescription.code, ext: '.txt' });
   fs.writeFileSync(fileName, '');
   var fd = fs.openSync(fileName, 'w');

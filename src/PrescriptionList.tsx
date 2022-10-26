@@ -34,6 +34,7 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
         setPrescriptions(unfixedPrescriptions);
       }
       setFixedPrescriptions(fixedPrescriptions);
+      setTab('unfixed');
     } catch (error) {
       setError(error);
     }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import app from './firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { format, parse } from 'date-fns';
-import { Button, Card, Flex, Form, Progress } from './components';
+import { Button, Card, Flex, Form } from './components';
 import { useAppContext } from './AppContext';
 import { nameWithCode } from './tools';
 import Loader from './components/Loader';
@@ -11,7 +11,6 @@ import Loader from './components/Loader';
 const RegisterClose: React.FC = () => {
   const { currentShop } = useAppContext();
   const [loading, setLoading] = useState<boolean>(false);
-  const [progress, setProgress] = useState(0);
   const [closeDate, setCloseDate] = useState<Date>(new Date());
 
   const getRegisterStatus = useCallback(async () => {
@@ -26,12 +25,13 @@ const RegisterClose: React.FC = () => {
     try {
       setLoading(true);
       if (currentShop) {
-        setInterval(() => setProgress((prev) => (prev + 1) % 100), 10);
         const status = await window.electronAPI.getRegisterStatus(format(closeDate, 'yyyyMMdd'));
         if (status) {
           status.closedAt = new Date();
           await window.electronAPI.setRegisterStatus(status);
         }
+        await window.electronAPI.syncSales();
+        await window.electronAPI.syncFirestore();
         if (false) {
           const functions = getFunctions(app, 'asia-northeast1');
           const result = await httpsCallable(
@@ -77,7 +77,6 @@ const RegisterClose: React.FC = () => {
               OK
             </Button>
           </div>
-          <div>{loading && <Progress value={progress} label={' '} />}</div>
         </Card.Body>
       </Card>
       <div className="m-4">
