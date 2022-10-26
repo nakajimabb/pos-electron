@@ -12,6 +12,7 @@ type Props = {
   basketItems: BasketItem[];
   setBasketItems: React.Dispatch<React.SetStateAction<BasketItem[]>>;
   setRegisterMode: React.Dispatch<React.SetStateAction<'Sales' | 'Return'>>;
+  setOpenPrescriptions: React.Dispatch<React.SetStateAction<boolean>>;
   onClose: () => void;
 };
 
@@ -22,6 +23,7 @@ const RegisterPayment: React.FC<Props> = ({
   basketItems,
   setBasketItems,
   setRegisterMode,
+  setOpenPrescriptions,
   onClose,
 }) => {
   const { currentShop, inputMode } = useAppContext();
@@ -285,6 +287,7 @@ const RegisterPayment: React.FC<Props> = ({
             setBasketItems([]);
             setRegisterMode('Sales');
             onClose();
+            setOpenPrescriptions(true);
           }}
           color="primary"
           disabled={toNumber(cashText) < salesTotal}

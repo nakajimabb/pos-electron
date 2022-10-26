@@ -18,6 +18,7 @@ export type ContextType = {
   productBulks: ProductBulkLocal[];
   fixedCostRates: FixedCostRateLocal[];
   inputMode: 'Normal' | 'Test';
+  setContextInputMode: React.Dispatch<React.SetStateAction<string>>;
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
 };
 
@@ -28,6 +29,7 @@ const AppContext = createContext({
   productBulks: [],
   fixedCostRates: [],
   inputMode: 'Normal',
+  setContextInputMode: null,
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
 } as ContextType);
 
@@ -150,6 +152,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         productBulks,
         fixedCostRates,
         inputMode,
+        setContextInputMode: setInputMode,
         addBundleDiscount,
       }}
     >

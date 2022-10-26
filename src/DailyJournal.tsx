@@ -32,13 +32,14 @@ const DailyJournal: React.FC = () => {
       let args = [];
       let paramIndex = 0;
 
-      if (registerStatus) {
+      const status = await window.electronAPI.getRegisterStatus();
+      if (status) {
         conds += ` AND createdAt >= $${paramIndex}`;
-        args.push(registerStatus.openedAt);
+        args.push(status.openedAt);
         paramIndex += 1;
-        if (registerStatus.closedAt) {
+        if (status.closedAt) {
           conds += ` AND createdAt < $${paramIndex}`;
-          args.push(registerStatus.closedAt);
+          args.push(status.closedAt);
           paramIndex += 1;
         }
       } else {
@@ -68,7 +69,7 @@ const DailyJournal: React.FC = () => {
       console.log({ error });
       setCompleted(true);
     }
-  }, [completed, currentShop, registerStatus]);
+  }, [completed, currentShop]);
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -78,8 +79,8 @@ const DailyJournal: React.FC = () => {
     let unmounted = false;
     (async () => {
       if (!unmounted) {
-        getRegisterStatus();
-        querySales();
+        await getRegisterStatus();
+        await querySales();
       }
     })();
     return () => {

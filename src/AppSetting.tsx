@@ -4,11 +4,13 @@ import { PrinterInfo } from 'electron';
 import { Link } from 'react-router-dom';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
+import { useAppContext } from './AppContext';
 import { Alert, Button, Card, Flex, Form, Grid } from './components';
 import { MAIL_DOMAIN } from './tools';
 import Loader from './components/Loader';
 
 const AppSetting: React.FC = () => {
+  const { setContextInputMode } = useAppContext();
   const [shopCode, setShopCode] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [sipsDir, setSipsDir] = useState<string>('');
@@ -82,13 +84,14 @@ const AppSetting: React.FC = () => {
         await window.electronAPI.setAppSetting('SIPS_DIR', sipsDir);
         await window.electronAPI.setAppSetting('PRINTER', printer);
         await window.electronAPI.setAppSetting('INPUT_MODE', inputMode);
+        setContextInputMode(inputMode);
         await window.electronAPI.initSipsDir();
         const auth = getAuth(firebaseApp);
         const email = shopCode.slice(1) + MAIL_DOMAIN;
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
             window.electronAPI.setStore('LAUNCHED', '1');
-            window.location.href = 'http://localhost:3000/main_window';
+            window.location.href = '#/';
           })
           .catch((error) => {
             console.log({ error });

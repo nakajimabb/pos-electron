@@ -187,9 +187,9 @@ const RegisterMain: React.FC = () => {
         basketItems={basketItems}
         setBasketItems={setBasketItems}
         setRegisterMode={setRegisterMode}
+        setOpenPrescriptions={setOpenPrescriptions}
         onClose={() => {
           setOpenPayment(false);
-          setOpenPrescriptions(true);
           document.getElementById('productCode')?.focus();
         }}
       />
@@ -466,6 +466,7 @@ const RegisterMain: React.FC = () => {
           <p className="mt-1 mr-2 text-sm text-right">
             {currentShop && `${nameWithCode(currentShop)} \u00A0`}
             {!registerClosed &&
+              registerStatus &&
               `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
             {basketItems.length === 0 ? (
               <Link to="/app_setting" className="underline">

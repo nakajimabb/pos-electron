@@ -30,10 +30,10 @@ const ReceiptPrint: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (sale) {
+    if (sale && shop) {
       window.electronAPI.printContents();
     }
-  }, [sale]);
+  }, [sale, shop]);
 
   return (
     <div className="p-10">

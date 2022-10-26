@@ -35,7 +35,7 @@ const RegisterOpen: React.FC = () => {
         });
       }
       await window.electronAPI.updateLocalDb();
-      window.location.href = 'http://localhost:3000/main_window';
+      window.location.href = '#/';
     } catch (error) {
       setError(error);
       setLoading(false);
