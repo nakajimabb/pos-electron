@@ -304,8 +304,8 @@ export const syncFirestore = async () => {
         const saleExist = await transaction.get(saleRef);
         if (!saleExist.exists()) {
           transaction.set(saleRef, sale);
-          const detailConds = `saleId == '$0'`;
-          const saleDetailLocals = realm.objects<SaleDetailLocal>('SaleDetail').filtered(detailConds, saleLocal.id);
+          const detailConds = `saleId == '${saleLocal.id}'`;
+          const saleDetailLocals = realm.objects<SaleDetailLocal>('SaleDetail').filtered(detailConds);
           saleDetailLocals.forEach((saleDetailLocal) => {
             let supplierRef: DocumentReference<Supplier> | null = null;
             if (saleDetailLocal.supplierCode) {
