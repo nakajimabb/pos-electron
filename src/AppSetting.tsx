@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
 import { useAppContext } from './AppContext';
-import { Alert, Button, Card, Flex, Form, Grid } from './components';
+import { Alert, Button, Card, Flex, Form, Grid, Icon } from './components';
 import { MAIL_DOMAIN } from './tools';
 import Loader from './components/Loader';
 
@@ -140,19 +140,35 @@ const AppSetting: React.FC = () => {
                 className="w-4/5"
                 onChange={(e) => setSipsDir(e.target.value)}
               />
-              <Button
-                color="light"
-                size="xs"
-                className="ml-1"
-                onClick={async () => {
-                  const folders = await window.electronAPI.showOpenFolderDialog();
-                  if (folders) {
-                    setSipsDir(folders[0]);
-                  }
-                }}
-              >
-                選択
-              </Button>
+              <div className="relative mt-1 w-6" style={{ left: -30 }}>
+                {sipsDir && (
+                  <Button
+                    variant="icon"
+                    size="xs"
+                    color="none"
+                    className="hover:bg-gray-300"
+                    onClick={() => {
+                      setSipsDir('');
+                    }}
+                  >
+                    <Icon name="x" />
+                  </Button>
+                )}
+              </div>
+              <div className="relative mt-0.5" style={{ left: -20 }}>
+                <Button
+                  color="light"
+                  size="xs"
+                  onClick={async () => {
+                    const folders = await window.electronAPI.showOpenFolderDialog();
+                    if (folders) {
+                      setSipsDir(folders[0]);
+                    }
+                  }}
+                >
+                  選択
+                </Button>
+              </div>
             </Flex>
             <Form.Label className="mt-1">プリンター</Form.Label>
             <Form.Select
