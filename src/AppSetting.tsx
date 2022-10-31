@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
 import { useAppContext } from './AppContext';
-import { Alert, Button, Card, Flex, Form, Grid, Icon } from './components';
+import { Alert, Button, Card, Flex, Form, Grid } from './components';
 import { MAIL_DOMAIN } from './tools';
 import Loader from './components/Loader';
 
@@ -151,7 +151,9 @@ const AppSetting: React.FC = () => {
                       setSipsDir('');
                     }}
                   >
-                    <Icon name="x" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </Button>
                 )}
               </div>
