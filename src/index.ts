@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, autoUpdater } from 'electron';
 import Realm from 'realm';
 import ElectronStore from 'electron-store';
 import * as fs from 'fs';
@@ -109,6 +109,24 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+require('update-electron-app')(
+  {notifyUser: false}
+);
+
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+  const dialogOpts = {
+    type: 'info',
+    buttons: ['再起動', '後で'],
+    title: 'アップデート通知',
+    message: process.platform === 'win32' ? releaseNotes : releaseName,
+    detail: '新しいバージョンがダウンロードされました。再起動して更新を適用してください。'
+  }
+
+  dialog.showMessageBox(dialogOpts).then(({ response }) => {
+    if (response === 0) autoUpdater.quitAndInstall()
+  })
+})
 
 const initSipsDir = () => {
   const sipsDirSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SIPS_DIR');

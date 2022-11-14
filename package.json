@@ -1,7 +1,7 @@
 {
   "name": "pos-electron",
   "productName": "PC-register",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "PCレジ",
   "main": ".webpack/main",
   "scripts": {
@@ -17,6 +17,10 @@
     "email": "prelude371@gmail.com"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nakajimabb/pos-electron.git"
+  },
   "config": {
     "forge": {
       "packagerConfig": {},
@@ -24,7 +28,9 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "pos_electron"
+            "name": "pos_electron",
+            "certificateFile": "./winet_codesigning.pfx",
+            "certificatePassword": ""
           }
         },
         {
@@ -43,9 +49,9 @@
         }
       ],
       "plugins": [
-        [
-          "@electron-forge/plugin-webpack",
-          {
+        {
+          "name": "@electron-forge/plugin-webpack",
+          "config": {
             "mainConfig": "./webpack.main.config.js",
             "devContentSecurityPolicy": "default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;",
             "renderer": {
@@ -62,50 +68,66 @@
               ]
             }
           }
-        ]
+        }
+      ],
+      "publishers": [
+        {
+          "name": "@electron-forge/publisher-github",
+          "config": {
+            "repository": {
+              "owner": "nakajimabb",
+              "name": "pos-electron"
+            }
+          }
+        }
       ]
     }
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.64",
-    "@electron-forge/maker-deb": "^6.0.0-beta.64",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.64",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.64",
-    "@electron-forge/maker-zip": "^6.0.0-beta.64",
-    "@electron-forge/plugin-webpack": "6.0.0-beta.64",
-    "@types/react": "^18.0.15",
-    "@types/react-dom": "^18.0.6",
+    "@electron-forge/cli": "^6.0.1",
+    "@electron-forge/maker-deb": "^6.0.1",
+    "@electron-forge/maker-rpm": "^6.0.1",
+    "@electron-forge/maker-squirrel": "^6.0.1",
+    "@electron-forge/maker-zip": "^6.0.1",
+    "@electron-forge/plugin-webpack": "6.0.1",
+    "@electron-forge/publisher-github": "^6.0.1",
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.8",
     "@types/react-router-dom": "^5.3.3",
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
-    "@typescript-eslint/parser": "^5.0.0",
-    "@vercel/webpack-asset-relocator-loader": "1.7.0",
-    "autoprefixer": "^10.4.7",
+    "@typescript-eslint/eslint-plugin": "^5.42.1",
+    "@typescript-eslint/parser": "^5.42.1",
+    "@vercel/webpack-asset-relocator-loader": "1.7.3",
+    "autoprefixer": "^10.4.13",
     "copy-webpack-plugin": "^11.0.0",
+    "cross-var": "^1.1.0",
     "css-loader": "^6.0.0",
-    "electron": "21.0.1",
-    "eslint": "^8.0.1",
+    "dotenv-cli": "^6.0.0",
+    "electron": "21.2.3",
+    "eslint": "^8.27.0",
     "eslint-plugin-import": "^2.25.0",
-    "fork-ts-checker-webpack-plugin": "^7.2.1",
+    "fork-ts-checker-webpack-plugin": "^7.2.13",
     "node-loader": "^2.0.0",
-    "postcss": "^8.4.14",
+    "postcss": "^8.4.19",
     "postcss-loader": "^7.0.1",
+    "process": "^0.11.10",
     "style-loader": "^3.0.0",
-    "tailwindcss": "^3.1.5",
-    "ts-loader": "^9.2.2",
-    "typescript": "~4.5.4"
+    "tailwindcss": "^3.2.3",
+    "ts-loader": "^9.4.1",
+    "typescript": "~4.8.4"
   },
   "dependencies": {
     "clsx": "^1.2.1",
-    "date-fns": "^2.28.0",
+    "date-fns": "^2.29.3",
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^8.1.0",
-    "firebase": "^9.9.0",
+    "firebase": "^9.14.0",
     "iconv-lite": "^0.6.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.3.0",
-    "react-svg": "^15.1.2",
-    "react-to-print": "^2.14.7",
-    "realm": "^11.0.0"
+    "react-router-dom": "^6.4.3",
+    "react-svg": "^15.1.11",
+    "react-to-print": "^2.14.8",
+    "realm": "^11.1.0",
+    "update-electron-app": "^2.0.1"
   }
 }

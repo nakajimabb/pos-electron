@@ -89,12 +89,8 @@ const Tabs: TabsType = ({
     if (!React.isValidElement(child)) return null;
 
     const selected = child.props.value === value;
-    return React.cloneElement(child, {
-      size,
-      variant,
-      selected,
-      onChange,
-    });
+    const childProps = {  size, variant, selected, onChange, };
+    return React.cloneElement(child, childProps);
   });
 
   const options =
