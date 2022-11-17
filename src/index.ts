@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, autoUpdater } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, autoUpdater, shell } from 'electron';
 import Realm from 'realm';
 import ElectronStore from 'electron-store';
 import * as fs from 'fs';
@@ -59,6 +59,14 @@ const createWindow = (): void => {
 
   mainWindow.setMenuBarVisibility(false);
 
+  const handleUrlOpen = (event: Electron.Event, url: string) => {
+    if (url.match(/^https/)) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  };
+  mainWindow.webContents.on('will-navigate', handleUrlOpen);
+
   // and load the index.html of the app.
   const launched = store.get('LAUNCHED');
   if (launched) {
@@ -110,9 +118,7 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-require('update-electron-app')(
-  {notifyUser: false}
-);
+require('update-electron-app')({ notifyUser: false });
 
 autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
   const dialogOpts = {
@@ -120,13 +126,13 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     buttons: ['再起動', '後で'],
     title: 'アップデート通知',
     message: process.platform === 'win32' ? releaseNotes : releaseName,
-    detail: '新しいバージョンがダウンロードされました。再起動して更新を適用してください。'
-  }
+    detail: '新しいバージョンがダウンロードされました。再起動して更新を適用してください。',
+  };
 
   dialog.showMessageBox(dialogOpts).then(({ response }) => {
-    if (response === 0) autoUpdater.quitAndInstall()
-  })
-})
+    if (response === 0) autoUpdater.quitAndInstall();
+  });
+});
 
 const initSipsDir = () => {
   const sipsDirSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SIPS_DIR');
@@ -250,6 +256,10 @@ const syncSales = () => {
     }
   });
 };
+
+ipcMain.handle('getAppVersion', (event) => {
+  return app.getVersion();
+});
 
 ipcMain.handle('initSipsDir', (event) => {
   initSipsDir();

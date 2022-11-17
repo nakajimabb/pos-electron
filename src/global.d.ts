@@ -1,5 +1,6 @@
 interface Window {
   electronAPI: {
+    getAppVersion: () => Promise<any>;
     initSipsDir: () => Promise<void>;
     getPrinters: () => Promise<any>;
     createReceiptWindow: (id: string) => Promise<void>;

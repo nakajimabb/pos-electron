@@ -37,6 +37,7 @@ const RegisterMain: React.FC = () => {
   const [paymentType, setPaymentType] = useState<'Cash' | 'Credit' | 'Digital'>('Cash');
   const [registerClosed, setRegisterClosed] = useState<boolean>(false);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
+  const [appVersion, setAppVersion] = useState<string>('');
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
   const findProduct = async (code: string) => {
@@ -171,10 +172,16 @@ const RegisterMain: React.FC = () => {
     setShortcuts(shortcutArray);
   }, []);
 
+  const getAppVersion = useCallback(async () => {
+    const version = (await window.electronAPI.getAppVersion()) as string;
+    setAppVersion(version);
+  }, []);
+
   useEffect(() => {
     getRegisterStatus();
     getRegisterItems();
     getShortcutItems();
+    getAppVersion();
     document.getElementById('productCode')?.focus();
   }, [getRegisterStatus, getRegisterItems, getShortcutItems]);
 
@@ -233,9 +240,12 @@ const RegisterMain: React.FC = () => {
       ></PrescriptionList>
       <Card className="container justify-center m-2 w-1/2">
         <Card.Body>
-          <p className="mt-1 ml-4 text-sm text-red-500 font-bold">
-            {inputMode === 'Test' ? '現在テストモードです。' : '\u00A0'}
-          </p>
+          <Flex justify_content="between">
+            <p className="mt-1 ml-4 text-sm">{appVersion ? `Ver.${appVersion}` : '\u00A0'}</p>
+            <p className="mt-1 ml-4 text-sm text-red-500 font-bold">
+              {inputMode === 'Test' ? '現在テストモードです。' : '\u00A0'}
+            </p>
+          </Flex>
           {registerClosed ? (
             <Flex className="mt-8 ml-4">
               <Link to="/register_open">
