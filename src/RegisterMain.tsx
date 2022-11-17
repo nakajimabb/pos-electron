@@ -240,12 +240,9 @@ const RegisterMain: React.FC = () => {
       ></PrescriptionList>
       <Card className="container justify-center m-2 w-1/2">
         <Card.Body>
-          <Flex justify_content="between">
-            <p className="mt-1 ml-4 text-sm">{appVersion ? `Ver.${appVersion}` : '\u00A0'}</p>
-            <p className="mt-1 ml-4 text-sm text-red-500 font-bold">
-              {inputMode === 'Test' ? '現在テストモードです。' : '\u00A0'}
-            </p>
-          </Flex>
+          <p className="mt-1 ml-4 text-sm text-red-500 font-bold">
+            {inputMode === 'Test' ? '現在テストモードです。' : '\u00A0'}
+          </p>
           {registerClosed ? (
             <Flex className="mt-8 ml-4">
               <Link to="/register_open">
@@ -596,6 +593,7 @@ const RegisterMain: React.FC = () => {
                   ))}
                 </div>
               </div>
+              <p className="mt-1 mr-2 text-sm text-right">{appVersion ? `Ver.${appVersion}` : '\u00A0'}</p>
             </>
           )}
         </Card.Body>
