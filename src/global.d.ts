@@ -1,4 +1,5 @@
 interface Window {
+  epson: any;
   electronAPI: {
     getAppVersion: () => Promise<any>;
     initSipsDir: () => Promise<void>;

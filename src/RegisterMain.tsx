@@ -484,19 +484,26 @@ const RegisterMain: React.FC = () => {
       </Card>
       <Card className="m-2 w-1/2">
         <Card.Body>
-          <p className="mt-1 mr-2 text-sm text-right">
-            {currentShop && `${nameWithCode(currentShop)} \u00A0`}
-            {!registerClosed &&
-              registerStatus &&
-              `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
-            {basketItems.length === 0 ? (
-              <Link to="/app_setting" className="underline">
-                基本設定
-              </Link>
-            ) : (
-              <span className="underline">基本設定</span>
-            )}
-          </p>
+          <Flex justify_content="between">
+            <p className="mt-1 mr-2 text-sm text-left">
+              <a href="https://pos-register-a5165.web.app/menu_list" className="underline ml-2">
+                在庫管理
+              </a>
+            </p>
+            <p className="mt-1 mr-2 text-sm text-right">
+              {currentShop && `${nameWithCode(currentShop)} \u00A0`}
+              {!registerClosed &&
+                registerStatus &&
+                `${parse(registerStatus?.dateString, 'yyyyMMdd', new Date()).toLocaleDateString()} \u00A0`}
+              {basketItems.length === 0 ? (
+                <Link to="/app_setting" className="underline">
+                  基本設定
+                </Link>
+              ) : (
+                <span className="underline">基本設定</span>
+              )}
+            </p>
+          </Flex>
 
           {registerItems.length > 0 && shortcuts.length > 0 && (
             <>

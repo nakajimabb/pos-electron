@@ -17,6 +17,8 @@ export type ContextType = {
   productBundles: ProductBundleLocal[];
   productBulks: ProductBulkLocal[];
   fixedCostRates: FixedCostRateLocal[];
+  printerType: 'Receipt' | 'Other';
+  printerAddress: string;
   inputMode: 'Normal' | 'Test';
   setContextInputMode: React.Dispatch<React.SetStateAction<string>>;
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
@@ -28,6 +30,8 @@ const AppContext = createContext({
   productBundles: [],
   productBulks: [],
   fixedCostRates: [],
+  printerType: 'Other',
+  printerAddress: '',
   inputMode: 'Normal',
   setContextInputMode: null,
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
@@ -43,6 +47,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
   const [productBundles, setProductBundles] = useState<ProductBundleLocal[]>([]);
   const [productBulks, setProductBulks] = useState<ProductBulkLocal[]>([]);
   const [fixedCostRates, setFixedCostRates] = useState<FixedCostRateLocal[]>([]);
+  const [printerType, setPrinterType] = useState<'Receipt' | 'Other'>('Other');
+  const [printerAddress, setPrinterAddress] = useState<string>('');
   const [inputMode, setInputMode] = useState<'Normal' | 'Test'>('Normal');
 
   const getProductBundles = useCallback(async () => {
@@ -60,6 +66,16 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     setFixedCostRates(rates);
   }, []);
 
+  const getPrinterType = useCallback(async () => {
+    const printerTypeSetting = await window.electronAPI.getAppSetting('PRINTER_TYPE');
+    setPrinterType(printerTypeSetting);
+  }, []);
+
+  const getPrinterAddress = useCallback(async () => {
+    const printerAddressSetting = await window.electronAPI.getAppSetting('PRINTER_ADDRESS');
+    setPrinterAddress(printerAddressSetting);
+  }, []);
+
   const getInputMode = useCallback(async () => {
     const inputModeSetting = await window.electronAPI.getAppSetting('INPUT_MODE');
     setInputMode(inputModeSetting);
@@ -69,8 +85,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     getProductBundles();
     getProductBulks();
     getFixedCostRates();
+    getPrinterType();
+    getPrinterAddress();
     getInputMode();
-  }, [getProductBundles, getProductBulks, getFixedCostRates, getInputMode]);
+  }, [getProductBundles, getProductBulks, getFixedCostRates, getPrinterType, getPrinterAddress, getInputMode]);
 
   useEffect(() => {
     const getCurrentShop = async () => {
@@ -151,6 +169,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         productBundles,
         productBulks,
         fixedCostRates,
+        printerType,
+        printerAddress,
         inputMode,
         setContextInputMode: setInputMode,
         addBundleDiscount,

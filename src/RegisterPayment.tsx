@@ -4,6 +4,7 @@ import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { createId, toNumber, PATIENT_DIVISION } from './tools';
+import { printReceipt } from './eposPrinter';
 
 type Props = {
   open: boolean;
@@ -26,7 +27,7 @@ const RegisterPayment: React.FC<Props> = ({
   setOpenPrescriptions,
   onClose,
 }) => {
-  const { currentShop, inputMode } = useAppContext();
+  const { currentShop, printerType, inputMode } = useAppContext();
   const [cashText, setCashText] = useState<string>('0');
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
@@ -105,7 +106,11 @@ const RegisterPayment: React.FC<Props> = ({
     }
     await window.electronAPI.createSaleWithDetails(sale, details);
     if (basketItems.some((item) => item.outputReceipt)) {
-      await window.electronAPI.createReceiptWindow(sale.id);
+      if (printerType === 'Receipt') {
+        await printReceipt(sale.id);
+      } else {
+        await window.electronAPI.createReceiptWindow(sale.id);
+      }
     }
   };
 

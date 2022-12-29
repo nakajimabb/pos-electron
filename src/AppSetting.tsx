@@ -14,6 +14,8 @@ const AppSetting: React.FC = () => {
   const [shopCode, setShopCode] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [sipsDir, setSipsDir] = useState<string>('');
+  const [printerType, setPrinterType] = useState<string>('Other');
+  const [printerAddress, setPrinterAddress] = useState<string>('');
   const [printer, setPrinter] = useState<string>('');
   const [printers, setPrinters] = useState<{ label: string; value: string }[]>([]);
   const [inputMode, setInputMode] = useState<string>('Normal');
@@ -36,6 +38,10 @@ const AppSetting: React.FC = () => {
     }
     const sipsDirSetting = settings.find((setting) => setting.key === 'SIPS_DIR');
     if (sipsDirSetting) setSipsDir(sipsDirSetting.value);
+    const printerTypeSetting = settings.find((setting) => setting.key === 'PRINTER_TYPE');
+    if (printerTypeSetting) setPrinterType(printerTypeSetting.value);
+    const printerAddressSetting = settings.find((setting) => setting.key === 'PRINTER_ADDRESS');
+    if (printerAddressSetting) setPrinterAddress(printerAddressSetting.value);
     const printerInfos = (await window.electronAPI.getPrinters()) as PrinterInfo[];
     if (printerInfos) {
       setPrinters(
@@ -70,8 +76,17 @@ const AppSetting: React.FC = () => {
     if (!password) {
       errorsData.push('パスワードを入力してください。');
     }
-    if (!printer.trim()) {
-      errorsData.push('プリンターを選択してください。');
+    const ipRegExp = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    if (printerType === 'Receipt') {
+      if (!printerAddress.trim()) {
+        errorsData.push('プリンターIPアドレスを入力してください。');
+      } else if (!ipRegExp.test(printerAddress.trim())) {
+        errorsData.push('プリンターIPアドレスが正しくありません。');
+      }
+    } else {
+      if (!printer.trim()) {
+        errorsData.push('プリンターを選択してください。');
+      }
     }
     if (errorsData.length == 0) {
       try {
@@ -79,6 +94,8 @@ const AppSetting: React.FC = () => {
         const encryptedPassword = await window.electronAPI.cipher(password, shopCode);
         await window.electronAPI.setAppSetting('PASSWORD', encryptedPassword);
         await window.electronAPI.setAppSetting('SIPS_DIR', sipsDir);
+        await window.electronAPI.setAppSetting('PRINTER_TYPE', printerType);
+        await window.electronAPI.setAppSetting('PRINTER_ADDRESS', printerAddress);
         await window.electronAPI.setAppSetting('PRINTER', printer);
         await window.electronAPI.setAppSetting('INPUT_MODE', inputMode);
         setContextInputMode(inputMode);
@@ -172,18 +189,53 @@ const AppSetting: React.FC = () => {
                 </Button>
               </div>
             </Flex>
-            <Form.Label className="mt-1">プリンター</Form.Label>
-            <Form.Select
-              className="w-4/5"
-              value={printer}
-              options={printers}
-              onChange={(e) => setPrinter(e.target.value)}
-            />
+            <Form.Label className="mt-1">プリンター種別</Form.Label>
+            <Grid cols="2" gap="2" className="mt-1">
+              <Form.Radio
+                id="radio1"
+                name="printer-type"
+                size="md"
+                label="専用レシートプリンター"
+                checked={printerType === 'Receipt'}
+                disabled={!launched}
+                onChange={(e) => setPrinterType('Receipt')}
+              />
+              <Form.Radio
+                id="radio2"
+                name="printer-type"
+                size="md"
+                label="その他のプリンター"
+                checked={printerType === 'Other'}
+                disabled={!launched}
+                onChange={(e) => setPrinterType('Other')}
+              />
+            </Grid>
+            {printerType === 'Receipt' ? (
+              <>
+                <Form.Label className="mt-1">IPアドレス</Form.Label>
+                <Form.Text
+                  value={printerAddress}
+                  className="w-1/2"
+                  disabled={!launched}
+                  onChange={(e) => setPrinterAddress(e.target.value)}
+                />
+              </>
+            ) : (
+              <>
+                <Form.Label className="mt-1">プリンター名</Form.Label>
+                <Form.Select
+                  className="w-4/5"
+                  value={printer}
+                  options={printers}
+                  onChange={(e) => setPrinter(e.target.value)}
+                />
+              </>
+            )}
             <Form.Label className="mt-1">入力モード</Form.Label>
             <Grid cols="3" gap="2" className="mt-1">
               <Form.Radio
-                id="radio1"
-                name="radio"
+                id="radio3"
+                name="input-mode"
                 size="md"
                 label="通常モード"
                 checked={inputMode === 'Normal'}
@@ -191,8 +243,8 @@ const AppSetting: React.FC = () => {
                 onChange={(e) => setInputMode('Normal')}
               />
               <Form.Radio
-                id="radio2"
-                name="radio"
+                id="radio4"
+                name="input-mode"
                 size="md"
                 label="テストモード"
                 checked={inputMode === 'Test'}

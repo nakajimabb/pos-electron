@@ -4,11 +4,12 @@ import { format } from 'date-fns';
 import { Alert, Button, Card, Flex, Form, Table } from './components';
 import { useAppContext } from './AppContext';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
+import { printReceipt } from './eposPrinter';
 
 const MAX_SEARCH = 50;
 
 const ReceiptList: React.FC = () => {
-  const { currentShop, inputMode } = useAppContext();
+  const { currentShop, printerType, inputMode } = useAppContext();
   const [sales, setSales] = useState<[string, SaleLocal, string][]>();
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
   const [dateTimeTo, setDateTimeTo] = useState<Date>();
@@ -147,7 +148,11 @@ const ReceiptList: React.FC = () => {
                             color="primary"
                             size="xs"
                             onClick={async () => {
-                              await window.electronAPI.createReceiptWindow(saleData.id);
+                              if (printerType === 'Receipt') {
+                                await printReceipt(saleData.id);
+                              } else {
+                                await window.electronAPI.createReceiptWindow(saleData.id);
+                              }
                             }}
                           >
                             印刷
