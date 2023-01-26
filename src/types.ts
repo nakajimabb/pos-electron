@@ -99,6 +99,7 @@ export type BasketItem = {
   outputReceipt: boolean;
   quantity: number;
   prescription?: Prescription;
+  zeroPrice?: boolean;
 };
 
 export type ShortcutItem = {

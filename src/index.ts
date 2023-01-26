@@ -257,6 +257,12 @@ const syncSales = () => {
   });
 };
 
+ipcMain.handle('fixFocus', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  win.blur();
+  win.focus();
+});
+
 ipcMain.handle('getAppVersion', (event) => {
   return app.getVersion();
 });

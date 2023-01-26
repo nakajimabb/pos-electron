@@ -1,7 +1,7 @@
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
 import { PrinterInfo } from 'electron';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import firebaseError from './firebaseError';
 import firebaseApp from './firebase';
 import { useAppContext } from './AppContext';
@@ -22,6 +22,7 @@ const AppSetting: React.FC = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [launched, setLaunched] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const getAppSettings = async () => {
     const launched = await window.electronAPI.getStore('LAUNCHED', false);
@@ -105,7 +106,7 @@ const AppSetting: React.FC = () => {
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
             window.electronAPI.setStore('LAUNCHED', '1');
-            window.location.href = '#/';
+            navigate('/');
           })
           .catch((error) => {
             console.log({ error });
@@ -169,7 +170,7 @@ const AppSetting: React.FC = () => {
                     }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </Button>
                 )}
@@ -195,19 +196,19 @@ const AppSetting: React.FC = () => {
                 id="radio1"
                 name="printer-type"
                 size="md"
-                label="専用レシートプリンター"
-                checked={printerType === 'Receipt'}
+                label="普通紙プリンター"
+                checked={printerType === 'Other'}
                 disabled={!launched}
-                onChange={(e) => setPrinterType('Receipt')}
+                onChange={(e) => setPrinterType('Other')}
               />
               <Form.Radio
                 id="radio2"
                 name="printer-type"
                 size="md"
-                label="その他のプリンター"
-                checked={printerType === 'Other'}
-                disabled={!launched}
-                onChange={(e) => setPrinterType('Other')}
+                label="レシートプリンター"
+                checked={printerType === 'Receipt'}
+                disabled={true}
+                onChange={(e) => setPrinterType('Receipt')}
               />
             </Grid>
             {printerType === 'Receipt' ? (

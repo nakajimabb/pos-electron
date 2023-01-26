@@ -13,14 +13,27 @@ type Props = {
 };
 
 const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBasketItems, onClose }) => {
+  const [priceText, setPriceText] = useState<string>('');
   const [quantityText, setQuantityText] = useState<string>('1');
   const [discountText, setDiscountText] = useState<string>('0');
   const [rateText, setRateText] = useState<string>('0');
   const { addBundleDiscount } = useAppContext();
 
   useEffect(() => {
+    const sellingPrice = basketItems[itemIndex]?.product.sellingPrice;
+    const zeroPrice = basketItems[itemIndex]?.zeroPrice;
+    const inputPrice = document.getElementById('inputPrice') as HTMLInputElement;
+    if (inputPrice) inputPrice.value = String(sellingPrice);
+    setPriceText(String(sellingPrice));
     const inputQuantity = document.getElementById('inputQuantity') as HTMLInputElement;
     if (inputQuantity) inputQuantity.value = String(basketItems[itemIndex]?.quantity);
+    // if (sellingPrice === 0 && !zeroPrice) {
+    //   inputPrice?.focus();
+    //   inputPrice?.select();
+    // } else {
+    //   inputQuantity?.focus();
+    //   inputQuantity?.select();
+    // }
     inputQuantity?.focus();
     inputQuantity?.select();
   }, [open, basketItems, itemIndex]);
@@ -30,7 +43,11 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
     if (basketItems[itemIndex]) {
       const existingIndex = basketItems.findIndex((item) => item.product.code === basketItems[itemIndex].product.code);
       if (existingIndex >= 0) {
+        basketItems[existingIndex].product.sellingPrice = toNumber(priceText);
         basketItems[existingIndex].quantity = toNumber(quantityText);
+        if (toNumber(priceText) === 0) {
+          basketItems[existingIndex].zeroPrice = true;
+        }
         if (toNumber(discountText) > 0 || toNumber(rateText) > 0) {
           let discountName = '値引き';
           let discountPrice = 0;
@@ -93,8 +110,25 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
               <Table.Cell>{basketItems[itemIndex]?.product.name}</Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell type="th">単価</Table.Cell>
-              <Table.Cell>{basketItems[itemIndex]?.product.sellingPrice?.toLocaleString()}</Table.Cell>
+              <Table.Cell type="th">
+                単価{' '}
+                {toNumber(basketItems[itemIndex]?.product.sellingPrice) === 0 && (
+                  <span className="text-red-500 font-bold ml-2">0が設定されています!</span>
+                )}
+              </Table.Cell>
+              <Table.Cell>
+                <Form onSubmit={save} className="space-y-2">
+                  <Form.Text
+                    id="inputPrice"
+                    placeholder="単価"
+                    value={priceText}
+                    disabled={true}
+                    onChange={(e) => setPriceText(e.target.value)}
+                    onBlur={() => setPriceText(toNumber(priceText).toString())}
+                    className="text-right w-full"
+                  />
+                </Form>
+              </Table.Cell>
             </Table.Row>
             <Table.Row>
               <Table.Cell type="th">数量</Table.Cell>
@@ -148,7 +182,16 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
         <Button color="primary" disabled={toNumber(quantityText) <= 0} onClick={save}>
           OK
         </Button>
-        <Button color="secondary" variant="outlined" onClick={onClose}>
+        <Button
+          color="secondary"
+          variant="outlined"
+          onClick={() => {
+            if (toNumber(priceText) === 0) {
+              basketItems[itemIndex].zeroPrice = true;
+            }
+            onClose();
+          }}
+        >
           キャンセル
         </Button>
       </Modal.Footer>

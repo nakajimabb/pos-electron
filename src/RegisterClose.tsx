@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import app from './firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { format, parse } from 'date-fns';
@@ -12,6 +12,7 @@ const RegisterClose: React.FC = () => {
   const { currentShop } = useAppContext();
   const [loading, setLoading] = useState<boolean>(false);
   const [closeDate, setCloseDate] = useState<Date>(new Date());
+  const navigate = useNavigate();
 
   const getRegisterStatus = useCallback(async () => {
     const status = await window.electronAPI.getRegisterStatus();
@@ -41,7 +42,7 @@ const RegisterClose: React.FC = () => {
         }
       }
       setLoading(false);
-      window.location.href = '#/daily_cash_report';
+      navigate('/daily_cash_report');
     } catch (error) {
       setLoading(false);
     }

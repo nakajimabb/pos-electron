@@ -1,6 +1,7 @@
 interface Window {
   epson: any;
   electronAPI: {
+    fixFocus: () => Promise<void>;
     getAppVersion: () => Promise<any>;
     initSipsDir: () => Promise<void>;
     getPrinters: () => Promise<any>;

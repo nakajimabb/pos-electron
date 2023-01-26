@@ -45,7 +45,7 @@ const RegisterMain: React.FC = () => {
     const product = await window.electronAPI.findProductByPk(code);
     if (product) {
       const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
-      if (sellingPrice) {
+      if (sellingPrice && sellingPrice.sellingPrice) {
         product.sellingPrice = sellingPrice.sellingPrice;
       }
       const existingIndex = basketItems.findIndex((item) => item.product.code === code);
@@ -157,7 +157,7 @@ const RegisterMain: React.FC = () => {
           const product = await window.electronAPI.findProductByPk(item.productCode);
           if (product) {
             const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(item.productCode);
-            if (sellingPrice) {
+            if (sellingPrice && sellingPrice.sellingPrice) {
               product.sellingPrice = sellingPrice.sellingPrice;
             }
             shortcutArray[item.index] = {
@@ -184,6 +184,14 @@ const RegisterMain: React.FC = () => {
     getAppVersion();
     document.getElementById('productCode')?.focus();
   }, [getRegisterStatus, getRegisterItems, getShortcutItems]);
+
+  // useEffect(() => {
+  //   const zeroPriceIndex = basketItems.findIndex((item) => item.product.sellingPrice === 0 && !item?.zeroPrice);
+  //   if (zeroPriceIndex >= 0) {
+  //     setBasketItemIndex(zeroPriceIndex);
+  //     setOpenModify(true);
+  //   }
+  // }, [basketItems]);
 
   return (
     <div className="flex w-full h-screen">
@@ -316,11 +324,12 @@ const RegisterMain: React.FC = () => {
                   color="danger"
                   size="xs"
                   className="w-24 mr-4"
-                  onClick={() => {
+                  onClick={async () => {
                     if (window.confirm('明細をクリアしてもよろしいですか？')) {
                       setBasketItems([]);
-                      document.getElementById('productCode')?.focus();
                     }
+                    await window.electronAPI.fixFocus();
+                    document.getElementById('productCode')?.focus();
                   }}
                 >
                   明細クリア
@@ -377,9 +386,9 @@ const RegisterMain: React.FC = () => {
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
                               d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                             />
                           </svg>
@@ -392,21 +401,22 @@ const RegisterMain: React.FC = () => {
                         size="xs"
                         color="none"
                         className="hover:bg-gray-300"
-                        onClick={(e) => {
+                        onClick={async () => {
                           setProductError('');
                           if (window.confirm('削除してもよろしいですか？')) {
                             setBasketItems(
                               addBundleDiscount(basketItems.filter((item, itemIndex) => index !== itemIndex))
                             );
-                            document.getElementById('productCode')?.focus();
                           }
+                          await window.electronAPI.fixFocus();
+                          document.getElementById('productCode')?.focus();
                         }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
@@ -486,7 +496,7 @@ const RegisterMain: React.FC = () => {
         <Card.Body>
           <Flex justify_content="between">
             <p className="mt-1 mr-2 text-sm text-left">
-              <a href="https://pos-register-a5165.web.app/menu_list" className="underline ml-2">
+              <a href="https://pos-register-a5165.web.app/menu_list" className="underline ml-2 hidden">
                 在庫管理
               </a>
             </p>
@@ -581,7 +591,7 @@ const RegisterMain: React.FC = () => {
                             setBasketItems(addBundleDiscount([...basketItems]));
                           } else {
                             const basketItem = {
-                              product: shortcut.product,
+                              product: { ...shortcut.product },
                               division: OTC_DIVISION,
                               outputReceipt: true,
                               quantity: 1,

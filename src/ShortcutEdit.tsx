@@ -31,7 +31,7 @@ const ShortcutEdit: React.FC = () => {
     const product = await window.electronAPI.findProductByPk(code);
     if (product) {
       const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(code);
-      if (sellingPrice) {
+      if (sellingPrice && sellingPrice.sellingPrice) {
         product.sellingPrice = sellingPrice.sellingPrice;
       }
       setProduct(product);
@@ -86,7 +86,7 @@ const ShortcutEdit: React.FC = () => {
           const product = await window.electronAPI.findProductByPk(item.productCode);
           if (product) {
             const sellingPrice = await window.electronAPI.findProductSellingPriceByPk(item.productCode);
-            if (sellingPrice) {
+            if (sellingPrice && sellingPrice.sellingPrice) {
               product.sellingPrice = sellingPrice.sellingPrice;
             }
             shortcutArray[item.index] = {

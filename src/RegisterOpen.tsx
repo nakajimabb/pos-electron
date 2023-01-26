@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Alert, Button, Card, Flex, Form } from './components';
 import { useAppContext } from './AppContext';
@@ -11,6 +11,7 @@ const RegisterOpen: React.FC = () => {
   const [error, setError] = useState('');
   const [openDate, setOpenDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +36,7 @@ const RegisterOpen: React.FC = () => {
         });
       }
       await window.electronAPI.updateLocalDb();
-      window.location.href = '#/';
+      navigate('/');
     } catch (error) {
       setError(error);
       setLoading(false);

@@ -7,6 +7,9 @@ import { Prescription } from './types';
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  fixFocus: async () => {
+    return await ipcRenderer.invoke('fixFocus');
+  },
   getAppVersion: async () => {
     return await ipcRenderer.invoke('getAppVersion');
   },
