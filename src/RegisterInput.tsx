@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Modal, Table } from './components';
+import { Button, Form, Modal, Table, NumberPad } from './components';
 import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { RegisterItemLocal } from './realmConfig';
@@ -15,13 +15,18 @@ type Props = {
 
 const RegisterInput: React.FC<Props> = ({ open, registerItem, basketItems, setBasketItems, onClose }) => {
   const [priceText, setPriceText] = useState<string>('0');
-  const { addBundleDiscount, fixedCostRates } = useAppContext();
+  const [inputFocus, setInputFocus] = useState<string>('');
+  const { addBundleDiscount, fixedCostRates, numberPad } = useAppContext();
 
   useEffect(() => {
     const inputPrice = document.getElementById('inputPrice') as HTMLInputElement;
     if (inputPrice && registerItem) inputPrice.value = toNumber(String(registerItem.defaultPrice)).toString();
     inputPrice?.focus();
     inputPrice?.select();
+    if (numberPad) {
+      setInputFocus('inputPrice');
+      if (registerItem) setPriceText(toNumber(String(registerItem.defaultPrice)).toString());
+    }
   }, [open, registerItem]);
 
   const save = (e: React.FormEvent) => {
@@ -72,15 +77,34 @@ const RegisterInput: React.FC<Props> = ({ open, registerItem, basketItems, setBa
             <Table.Row>
               <Table.Cell type="th">金額</Table.Cell>
               <Table.Cell>
-                <Form onSubmit={save} className="space-y-2">
-                  <Form.Text
-                    id="inputPrice"
-                    placeholder="金額"
-                    value={priceText}
-                    onChange={(e) => setPriceText(e.target.value)}
-                    onBlur={() => setPriceText(toNumber(priceText).toString())}
-                    className="text-right w-full"
-                  />
+                <Form
+                  onSubmit={(e) => {
+                    if (numberPad) {
+                      e.preventDefault();
+                    } else {
+                      save(e);
+                    }
+                  }}
+                  className="space-y-2"
+                >
+                  {numberPad ? (
+                    <NumberPad
+                      id="inputPrice"
+                      value={priceText}
+                      setValue={setPriceText}
+                      inputFocus={inputFocus}
+                      setInputFocus={setInputFocus}
+                    ></NumberPad>
+                  ) : (
+                    <Form.Text
+                      id="inputPrice"
+                      placeholder="金額"
+                      value={priceText}
+                      onChange={(e) => setPriceText(e.target.value)}
+                      onBlur={() => setPriceText(toNumber(priceText).toString())}
+                      className="text-right w-full"
+                    />
+                  )}
                 </Form>
               </Table.Cell>
             </Table.Row>

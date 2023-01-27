@@ -15,5 +15,6 @@ export { default as Table } from './Table';
 export { default as Tooltip } from './Tooltip';
 export { default as defaultTheme } from './defaultTheme';
 export { default as ThemeProvider, useTheme } from './ThemeProvider';
+export { default as NumberPad } from './NumberPad';
 
 export * from './Tabs';

@@ -20,7 +20,9 @@ export type ContextType = {
   printerType: 'Receipt' | 'Other';
   printerAddress: string;
   inputMode: 'Normal' | 'Test';
+  numberPad: boolean;
   setContextInputMode: React.Dispatch<React.SetStateAction<string>>;
+  setContextNumberPad: React.Dispatch<React.SetStateAction<boolean>>;
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
 };
 
@@ -33,7 +35,9 @@ const AppContext = createContext({
   printerType: 'Other',
   printerAddress: '',
   inputMode: 'Normal',
+  numberPad: false,
   setContextInputMode: null,
+  setContextNumberPad: null,
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
 } as ContextType);
 
@@ -50,6 +54,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
   const [printerType, setPrinterType] = useState<'Receipt' | 'Other'>('Other');
   const [printerAddress, setPrinterAddress] = useState<string>('');
   const [inputMode, setInputMode] = useState<'Normal' | 'Test'>('Normal');
+  const [numberPad, setNumberPad] = useState<boolean>(false);
 
   const getProductBundles = useCallback(async () => {
     const bundles = (await window.electronAPI.findProductBundles()) as ProductBundleLocal[];
@@ -81,6 +86,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     setInputMode(inputModeSetting);
   }, []);
 
+  const getNumberPad = useCallback(async () => {
+    const numberPadSetting = await window.electronAPI.getAppSetting('NUMBER_PAD');
+    setNumberPad(numberPadSetting);
+  }, []);
+
   useEffect(() => {
     getProductBundles();
     getProductBulks();
@@ -88,7 +98,16 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     getPrinterType();
     getPrinterAddress();
     getInputMode();
-  }, [getProductBundles, getProductBulks, getFixedCostRates, getPrinterType, getPrinterAddress, getInputMode]);
+    getNumberPad();
+  }, [
+    getProductBundles,
+    getProductBulks,
+    getFixedCostRates,
+    getPrinterType,
+    getPrinterAddress,
+    getInputMode,
+    getNumberPad,
+  ]);
 
   useEffect(() => {
     const getCurrentShop = async () => {
@@ -172,7 +191,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         printerType,
         printerAddress,
         inputMode,
+        numberPad,
         setContextInputMode: setInputMode,
+        setContextNumberPad: setNumberPad,
         addBundleDiscount,
       }}
     >

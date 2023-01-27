@@ -134,6 +134,15 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
   });
 });
 
+const checkSipsDir = (sipsDirPath: string) => {
+  try {
+    fs.accessSync(sipsDirPath,fs.constants.R_OK | fs.constants.W_OK)
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 const initSipsDir = () => {
   const sipsDirSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SIPS_DIR');
   if (sipsDirSetting && sipsDirSetting.value.length > 0) {
@@ -265,6 +274,10 @@ ipcMain.handle('fixFocus', (event) => {
 
 ipcMain.handle('getAppVersion', (event) => {
   return app.getVersion();
+});
+
+ipcMain.handle('checkSipsDir', (event, sipsDirPath) => {
+  return checkSipsDir(sipsDirPath);
 });
 
 ipcMain.handle('initSipsDir', (event) => {

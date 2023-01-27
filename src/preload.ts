@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: async () => {
     return await ipcRenderer.invoke('getAppVersion');
   },
+  checkSipsDir: async (sipsDirPath: string) => {
+    return await ipcRenderer.invoke('checkSipsDir', sipsDirPath);
+  }, 
   initSipsDir: async () => {
     await ipcRenderer.invoke('initSipsDir');
   },

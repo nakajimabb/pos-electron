@@ -3,6 +3,7 @@ interface Window {
   electronAPI: {
     fixFocus: () => Promise<void>;
     getAppVersion: () => Promise<any>;
+    checkSipsDir: (sipsDirPath: string) => Promise<any>;
     initSipsDir: () => Promise<void>;
     getPrinters: () => Promise<any>;
     createReceiptWindow: (id: string) => Promise<void>;

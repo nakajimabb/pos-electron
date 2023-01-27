@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Modal, Table } from './components';
+import { Button, Form, Modal, Table, NumberPad } from './components';
 import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
@@ -27,8 +27,9 @@ const RegisterPayment: React.FC<Props> = ({
   setOpenPrescriptions,
   onClose,
 }) => {
-  const { currentShop, printerType, inputMode } = useAppContext();
+  const { currentShop, printerType, inputMode, numberPad } = useAppContext();
   const [cashText, setCashText] = useState<string>('0');
+  const [inputFocus, setInputFocus] = useState<string>('');
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
   const save = async () => {
@@ -226,6 +227,7 @@ const RegisterPayment: React.FC<Props> = ({
     const inputCash = document.getElementById('inputCash') as HTMLInputElement;
     inputCash?.focus();
     inputCash?.select();
+    if (numberPad) setInputFocus('inputCash');
   }, [open, registerMode, paymentType, salesTotal]);
 
   return (
@@ -250,26 +252,43 @@ const RegisterPayment: React.FC<Props> = ({
             <Table.Row className={registerMode === 'Return' ? 'hidden' : ''}>
               <Table.Cell type="th">お預かり</Table.Cell>
               <Table.Cell>
-                <Form className="space-y-2">
-                  <Form.Text
-                    id="inputCash"
-                    placeholder="金額"
-                    value={cashText}
-                    onChange={(e) => setCashText(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (toNumber(cashText) >= salesTotal) {
-                          save();
-                          setBasketItems([]);
-                          setRegisterMode('Sales');
-                          onClose();
+                <Form
+                  className="space-y-2"
+                  onSubmit={(e) => {
+                    if (numberPad) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  {numberPad ? (
+                    <NumberPad
+                      id="inputCash"
+                      value={cashText}
+                      setValue={setCashText}
+                      inputFocus={inputFocus}
+                      setInputFocus={setInputFocus}
+                    ></NumberPad>
+                  ) : (
+                    <Form.Text
+                      id="inputCash"
+                      placeholder="金額"
+                      value={cashText}
+                      onChange={(e) => setCashText(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (toNumber(cashText) >= salesTotal) {
+                            save();
+                            setBasketItems([]);
+                            setRegisterMode('Sales');
+                            onClose();
+                          }
                         }
-                      }
-                    }}
-                    onBlur={() => setCashText(toNumber(cashText).toString())}
-                    className="text-right w-full"
-                  />
+                      }}
+                      onBlur={() => setCashText(toNumber(cashText).toString())}
+                      className="text-right w-full"
+                    />
+                  )}
                 </Form>
               </Table.Cell>
             </Table.Row>

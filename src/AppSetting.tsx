@@ -10,7 +10,7 @@ import { MAIL_DOMAIN } from './tools';
 import Loader from './components/Loader';
 
 const AppSetting: React.FC = () => {
-  const { setContextInputMode } = useAppContext();
+  const { setContextInputMode, setContextNumberPad } = useAppContext();
   const [shopCode, setShopCode] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [sipsDir, setSipsDir] = useState<string>('');
@@ -19,6 +19,7 @@ const AppSetting: React.FC = () => {
   const [printer, setPrinter] = useState<string>('');
   const [printers, setPrinters] = useState<{ label: string; value: string }[]>([]);
   const [inputMode, setInputMode] = useState<string>('Normal');
+  const [numberPad, setNumberPad] = useState<boolean>(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [launched, setLaunched] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -63,6 +64,8 @@ const AppSetting: React.FC = () => {
     }
     const inputModeSetting = settings.find((setting) => setting.key === 'INPUT_MODE');
     if (inputModeSetting) setInputMode(inputModeSetting.value);
+    const numberPadSetting = settings.find((setting) => setting.key === 'NUMBER_PAD');
+    if (numberPadSetting) setNumberPad(numberPadSetting.value === '1');
   };
 
   const save = async (e: React.FormEvent) => {
@@ -76,6 +79,12 @@ const AppSetting: React.FC = () => {
     }
     if (!password) {
       errorsData.push('パスワードを入力してください。');
+    }
+    if (sipsDir) {
+      const sipsDirAvailable = await window.electronAPI.checkSipsDir(sipsDir);
+      if (!sipsDirAvailable) {
+        errorsData.push('SIPSフォルダにアクセスできません。');
+      }
     }
     const ipRegExp = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     if (printerType === 'Receipt') {
@@ -100,6 +109,8 @@ const AppSetting: React.FC = () => {
         await window.electronAPI.setAppSetting('PRINTER', printer);
         await window.electronAPI.setAppSetting('INPUT_MODE', inputMode);
         setContextInputMode(inputMode);
+        await window.electronAPI.setAppSetting('NUMBER_PAD', numberPad ? '1' : '0');
+        setContextNumberPad(numberPad);
         await window.electronAPI.initSipsDir();
         const auth = getAuth(firebaseApp);
         const email = shopCode.slice(1) + MAIL_DOMAIN;
@@ -152,12 +163,7 @@ const AppSetting: React.FC = () => {
             />
             <Form.Label className="mt-1">SIPSフォルダ</Form.Label>
             <Flex>
-              <Form.Text
-                value={sipsDir}
-                disabled={true}
-                className="w-4/5"
-                onChange={(e) => setSipsDir(e.target.value)}
-              />
+              <Form.Text value={sipsDir} className="w-4/5" onChange={(e) => setSipsDir(e.target.value)} />
               <div className="relative mt-1 w-6" style={{ left: -30 }}>
                 {sipsDir && (
                   <Button
@@ -251,6 +257,27 @@ const AppSetting: React.FC = () => {
                 checked={inputMode === 'Test'}
                 disabled={!launched}
                 onChange={(e) => setInputMode('Test')}
+              />
+            </Grid>
+            <Form.Label className="mt-1">テンキー表示</Form.Label>
+            <Grid cols="3" gap="2" className="mt-1">
+              <Form.Radio
+                id="radio5"
+                name="number-pad"
+                size="md"
+                label="する"
+                checked={numberPad}
+                disabled={!launched}
+                onChange={(e) => setNumberPad(true)}
+              />
+              <Form.Radio
+                id="radio6"
+                name="number-pad"
+                size="md"
+                label="しない"
+                checked={!numberPad}
+                disabled={!launched}
+                onChange={(e) => setNumberPad(false)}
               />
             </Grid>
           </Grid>
