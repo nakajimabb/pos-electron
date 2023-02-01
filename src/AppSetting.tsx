@@ -10,7 +10,7 @@ import { MAIL_DOMAIN } from './tools';
 import Loader from './components/Loader';
 
 const AppSetting: React.FC = () => {
-  const { setContextInputMode, setContextNumberPad } = useAppContext();
+  const { setContextPrinterType, setContextInputMode, setContextNumberPad } = useAppContext();
   const [shopCode, setShopCode] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [sipsDir, setSipsDir] = useState<string>('');
@@ -105,6 +105,7 @@ const AppSetting: React.FC = () => {
         await window.electronAPI.setAppSetting('PASSWORD', encryptedPassword);
         await window.electronAPI.setAppSetting('SIPS_DIR', sipsDir);
         await window.electronAPI.setAppSetting('PRINTER_TYPE', printerType);
+        setContextPrinterType(printerType);
         await window.electronAPI.setAppSetting('PRINTER_ADDRESS', printerAddress);
         await window.electronAPI.setAppSetting('PRINTER', printer);
         await window.electronAPI.setAppSetting('INPUT_MODE', inputMode);
@@ -204,7 +205,6 @@ const AppSetting: React.FC = () => {
                 size="md"
                 label="普通紙プリンター"
                 checked={printerType === 'Other'}
-                disabled={!launched}
                 onChange={(e) => setPrinterType('Other')}
               />
               <Form.Radio
@@ -213,7 +213,6 @@ const AppSetting: React.FC = () => {
                 size="md"
                 label="レシートプリンター"
                 checked={printerType === 'Receipt'}
-                disabled={true}
                 onChange={(e) => setPrinterType('Receipt')}
               />
             </Grid>
@@ -238,10 +237,29 @@ const AppSetting: React.FC = () => {
                 />
               </>
             )}
-            <Form.Label className="mt-1">入力モード</Form.Label>
+            <Form.Label className="mt-1">テンキー表示</Form.Label>
             <Grid cols="3" gap="2" className="mt-1">
               <Form.Radio
                 id="radio3"
+                name="number-pad"
+                size="md"
+                label="有効"
+                checked={numberPad}
+                onChange={(e) => setNumberPad(true)}
+              />
+              <Form.Radio
+                id="radio4"
+                name="number-pad"
+                size="md"
+                label="無効"
+                checked={!numberPad}
+                onChange={(e) => setNumberPad(false)}
+              />
+            </Grid>
+            <Form.Label className="mt-1">入力モード</Form.Label>
+            <Grid cols="3" gap="2" className="mt-1">
+              <Form.Radio
+                id="radio5"
                 name="input-mode"
                 size="md"
                 label="通常モード"
@@ -250,34 +268,13 @@ const AppSetting: React.FC = () => {
                 onChange={(e) => setInputMode('Normal')}
               />
               <Form.Radio
-                id="radio4"
+                id="radio6"
                 name="input-mode"
                 size="md"
                 label="テストモード"
                 checked={inputMode === 'Test'}
                 disabled={!launched}
                 onChange={(e) => setInputMode('Test')}
-              />
-            </Grid>
-            <Form.Label className="mt-1">テンキー表示</Form.Label>
-            <Grid cols="3" gap="2" className="mt-1">
-              <Form.Radio
-                id="radio5"
-                name="number-pad"
-                size="md"
-                label="する"
-                checked={numberPad}
-                disabled={!launched}
-                onChange={(e) => setNumberPad(true)}
-              />
-              <Form.Radio
-                id="radio6"
-                name="number-pad"
-                size="md"
-                label="しない"
-                checked={!numberPad}
-                disabled={!launched}
-                onChange={(e) => setNumberPad(false)}
               />
             </Grid>
           </Grid>

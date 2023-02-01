@@ -27,6 +27,7 @@ interface Window {
     findSales: (conds?: string, ...args: any[]) => Promise<any>;
     findSaleDetails: (conds?: string) => Promise<any>;
     createSaleWithDetails: (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => Promise<void>;
+    deleteSaleWithDetails: (id: string) => Promise<void>;
     getRegisterStatus: (dateString?: string) => Promise<any>;
     setRegisterStatus: (status: RegisterStatusLocal) => Promise<void>;
     findRegisterItemByPk: (index: number) => Promise<any>;

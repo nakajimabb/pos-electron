@@ -5,6 +5,7 @@ import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { createId, toNumber, PATIENT_DIVISION } from './tools';
 import { printReceipt } from './eposPrinter';
+import Loader from './components/Loader';
 
 type Props = {
   open: boolean;
@@ -30,10 +31,13 @@ const RegisterPayment: React.FC<Props> = ({
   const { currentShop, printerType, inputMode, numberPad } = useAppContext();
   const [cashText, setCashText] = useState<string>('0');
   const [inputFocus, setInputFocus] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
-  const save = async () => {
+  const save = async (callback: () => any) => {
     if (!currentShop) return;
+    setLoading(true);
+    await window.electronAPI.setStore('SYNC_FIRESTORE', '0');
     const newId = createId();
     const receiptNumber = new Date().getTime();
     const sale: SaleLocal = {
@@ -108,9 +112,13 @@ const RegisterPayment: React.FC<Props> = ({
     await window.electronAPI.createSaleWithDetails(sale, details);
     if (basketItems.some((item) => item.outputReceipt)) {
       if (printerType === 'Receipt') {
-        await printReceipt(sale.id);
+        await printReceipt(sale.id, callback, () => {
+          window.electronAPI.setStore('SYNC_FIRESTORE', '1');
+          setLoading(false);
+        });
       } else {
         await window.electronAPI.createReceiptWindow(sale.id);
+        callback();
       }
     }
   };
@@ -241,6 +249,7 @@ const RegisterPayment: React.FC<Props> = ({
         {paymentType === 'Cash' ? '（現金）' : paymentType === 'Credit' ? '（クレジット）' : '（電子マネー）'}
       </Modal.Header>
       <Modal.Body>
+        {loading && <Loader />}
         <Table border="row" className="table-fixed w-full">
           <Table.Body>
             <Table.Row>
@@ -278,10 +287,14 @@ const RegisterPayment: React.FC<Props> = ({
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           if (toNumber(cashText) >= salesTotal) {
-                            save();
-                            setBasketItems([]);
-                            setRegisterMode('Sales');
-                            onClose();
+                            save(() => {
+                              window.electronAPI.setStore('SYNC_FIRESTORE', '1');
+                              setLoading(false);
+                              setBasketItems([]);
+                              setRegisterMode('Sales');
+                              onClose();
+                              setOpenPrescriptions(true);
+                            });
                           }
                         }
                       }}
@@ -307,11 +320,14 @@ const RegisterPayment: React.FC<Props> = ({
         </Button>
         <Button
           onClick={(e) => {
-            save();
-            setBasketItems([]);
-            setRegisterMode('Sales');
-            onClose();
-            setOpenPrescriptions(true);
+            save(() => {
+              window.electronAPI.setStore('SYNC_FIRESTORE', '1');
+              setLoading(false);
+              setBasketItems([]);
+              setRegisterMode('Sales');
+              onClose();
+              setOpenPrescriptions(true);
+            });
           }}
           color="primary"
           disabled={toNumber(cashText) < salesTotal}

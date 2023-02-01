@@ -35,6 +35,8 @@ const ReceiptPrint: React.FC = () => {
     }
   }, [sale, shop]);
 
+  const registerSign = sale?.status === 'Return' ? -1 : 1;
+
   return (
     <div className="p-10">
       <p className="text-right text-sm mt-2">
@@ -78,10 +80,10 @@ const ReceiptPrint: React.FC = () => {
                 <Table.Cell>{saleDetail.productName}</Table.Cell>
                 <Table.Cell className="text-right">{saleDetail.productCode ? saleDetail.quantity : null}</Table.Cell>
                 <Table.Cell className="text-right">
-                  {saleDetail.productCode ? `¥${saleDetail.sellingPrice?.toLocaleString()}` : null}
+                  {saleDetail.productCode ? `¥${Number(saleDetail.sellingPrice) * registerSign + 0}` : null}
                 </Table.Cell>
                 <Table.Cell className="text-right">
-                  ¥{(Number(saleDetail.sellingPrice) * saleDetail.quantity)?.toLocaleString()}
+                  ¥{(Number(saleDetail.sellingPrice) * saleDetail.quantity * registerSign + 0)?.toLocaleString()}
                 </Table.Cell>
               </Table.Row>
             ))}

@@ -81,7 +81,7 @@ const NumberPad: React.FC<Props> = (props) => {
             {keyboardValues.map((keyboardValue, i) => (
               <button
                 key={i}
-                className="bg-blue-400 text-white p-1 h-10"
+                className="bg-blue-400 text-white p-1 h-12"
                 onClick={() => handlerKeyboardClick(keyboardValue)}
               >
                 {keyboardValue}

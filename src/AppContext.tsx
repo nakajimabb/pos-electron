@@ -21,6 +21,7 @@ export type ContextType = {
   printerAddress: string;
   inputMode: 'Normal' | 'Test';
   numberPad: boolean;
+  setContextPrinterType: React.Dispatch<React.SetStateAction<string>>;
   setContextInputMode: React.Dispatch<React.SetStateAction<string>>;
   setContextNumberPad: React.Dispatch<React.SetStateAction<boolean>>;
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
@@ -36,6 +37,7 @@ const AppContext = createContext({
   printerAddress: '',
   inputMode: 'Normal',
   numberPad: false,
+  setContextPrinterType: null,
   setContextInputMode: null,
   setContextNumberPad: null,
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
@@ -88,7 +90,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 
   const getNumberPad = useCallback(async () => {
     const numberPadSetting = await window.electronAPI.getAppSetting('NUMBER_PAD');
-    setNumberPad(numberPadSetting);
+    setNumberPad(numberPadSetting === '1');
   }, []);
 
   useEffect(() => {
@@ -192,6 +194,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         printerAddress,
         inputMode,
         numberPad,
+        setContextPrinterType: setPrinterType,
         setContextInputMode: setInputMode,
         setContextNumberPad: setNumberPad,
         addBundleDiscount,

@@ -31,6 +31,7 @@ const RegisterClose: React.FC = () => {
           status.closedAt = new Date();
           await window.electronAPI.setRegisterStatus(status);
         }
+        await window.electronAPI.setStore('SYNC_FIRESTORE', '1');
         await window.electronAPI.syncSales();
         await window.electronAPI.syncFirestore();
         if (false) {

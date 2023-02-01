@@ -5,6 +5,7 @@ import { Alert, Button, Card, Flex, Form, Table } from './components';
 import { useAppContext } from './AppContext';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { printReceipt } from './eposPrinter';
+import Loader from './components/Loader';
 
 const MAX_SEARCH = 50;
 
@@ -14,6 +15,7 @@ const ReceiptList: React.FC = () => {
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
   const [dateTimeTo, setDateTimeTo] = useState<Date>();
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const querySales = useCallback(async () => {
     if (!currentShop) return;
@@ -70,6 +72,7 @@ const ReceiptList: React.FC = () => {
 
   return (
     <Flex direction="col" justify_content="center" align_items="center" className="h-screen">
+      {loading && <Loader />}
       <Flex justify_content="between" align_items="center" className="p-4">
         <Flex>
           <Form onSubmit={handleSubmit}>
@@ -148,10 +151,20 @@ const ReceiptList: React.FC = () => {
                             color="primary"
                             size="xs"
                             onClick={async () => {
+                              setLoading(true);
                               if (printerType === 'Receipt') {
-                                await printReceipt(saleData.id);
+                                await printReceipt(
+                                  saleData.id,
+                                  () => {
+                                    setLoading(false);
+                                  },
+                                  () => {
+                                    setLoading(false);
+                                  }
+                                );
                               } else {
                                 await window.electronAPI.createReceiptWindow(saleData.id);
+                                setLoading(false);
                               }
                             }}
                           >

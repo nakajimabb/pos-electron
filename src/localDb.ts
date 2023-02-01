@@ -18,6 +18,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import Realm from 'realm';
+import ElectronStore from 'electron-store';
 import {
   Product,
   ProductBulk,
@@ -51,6 +52,7 @@ import { decipher } from './encryption';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const store = new ElectronStore();
 
 export const updateLocalDb = async () => {
   const auth = getAuth(firebaseApp);
@@ -256,6 +258,9 @@ export const updateLocalDb = async () => {
 export const syncFirestore = async () => {
   const auth = getAuth(firebaseApp);
   const realm = await Realm.open(RealmConfig);
+
+  const syncFirestoreSetting = store.get('SYNC_FIRESTORE');
+  if (!syncFirestoreSetting || syncFirestoreSetting !== '1') return;
   const shopCodeSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SHOP_CODE');
   if (!shopCodeSetting) return;
   const shopCode = shopCodeSetting.value.slice(1);

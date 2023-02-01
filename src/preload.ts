@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   checkSipsDir: async (sipsDirPath: string) => {
     return await ipcRenderer.invoke('checkSipsDir', sipsDirPath);
-  }, 
+  },
   initSipsDir: async () => {
     await ipcRenderer.invoke('initSipsDir');
   },
@@ -84,6 +84,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   createSaleWithDetails: async (sale: SaleLocal, saleDetails: SaleDetailLocal[]) => {
     await ipcRenderer.invoke('createSaleWithDetails', sale, saleDetails);
+  },
+  deleteSaleWithDetails: async (id: string) => {
+    await ipcRenderer.invoke('deleteSaleWithDetails', id);
   },
   getRegisterStatus: async (dateString?: string) => {
     return await ipcRenderer.invoke('getRegisterStatus', dateString);

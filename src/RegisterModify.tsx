@@ -39,8 +39,8 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
     inputQuantity?.select();
     if (numberPad) {
       setInputFocus('inputQuantity');
-      setQuantityText(String(basketItems[itemIndex]?.quantity));
     }
+    setQuantityText(String(basketItems[itemIndex]?.quantity));
   }, [open, basketItems, itemIndex]);
 
   const save = (e: React.FormEvent) => {

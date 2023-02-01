@@ -70,6 +70,7 @@ const createWindow = (): void => {
   // and load the index.html of the app.
   const launched = store.get('LAUNCHED');
   if (launched) {
+    store.set('SYNC_FIRESTORE', '1');
     initSipsDir();
     deleteOldSipsFiles();
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
@@ -136,12 +137,12 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
 
 const checkSipsDir = (sipsDirPath: string) => {
   try {
-    fs.accessSync(sipsDirPath,fs.constants.R_OK | fs.constants.W_OK)
+    fs.accessSync(sipsDirPath, fs.constants.R_OK | fs.constants.W_OK);
     return true;
   } catch (error) {
     return false;
   }
-}
+};
 
 const initSipsDir = () => {
   const sipsDirSetting = realm.objectForPrimaryKey<{ key: string; value: string }>('AppSetting', 'SIPS_DIR');
@@ -646,6 +647,18 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
     var buf = iconv.encode(JSON.stringify(data), 'Shift_JIS');
     fs.write(fd, buf, 0, buf.length, (error) => {
       if (error) console.log(error);
+    });
+  }
+});
+
+ipcMain.handle('deleteSaleWithDetails', (event, id) => {
+  const sale = realm.objectForPrimaryKey<SaleLocal>('Sale', id);
+  if (sale) {
+    realm.write(() => {
+      const detailConds = `saleId == '${id}'`;
+      const saleDetails = realm.objects<SaleDetailLocal>('SaleDetail').filtered(detailConds);
+      realm.delete(sale);
+      realm.delete(saleDetails);
     });
   }
 });
