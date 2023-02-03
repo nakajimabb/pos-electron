@@ -48,6 +48,7 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
                 }
               };
               printer.addTextLang('ja');
+              printer.addPulse();
               printer.addFeed();
               printer.addTextAlign(printer.ALIGN_CENTER);
               printer.addTextDouble(true, false);
@@ -125,7 +126,7 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
               printer.addText('税制対象製品です。\n');
               printer.addFeed();
               printer.addFeed();
-              printer.addFeed();
+              printer.addCut();
               printer.send();
             } else {
               alert(`印刷できません。\nエラーコード：${retcode}`);
