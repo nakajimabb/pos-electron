@@ -118,6 +118,7 @@ const AppSetting: React.FC = () => {
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
             window.electronAPI.setStore('LAUNCHED', '1');
+            window.electronAPI.setStore('SYNC_FIRESTORE', '1');
             navigate('/');
           })
           .catch((error) => {
