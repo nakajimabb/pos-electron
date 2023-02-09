@@ -120,6 +120,8 @@ const RegisterPayment: React.FC<Props> = ({
         await window.electronAPI.createReceiptWindow(sale.id);
         callback();
       }
+    } else {
+      callback();
     }
   };
 
