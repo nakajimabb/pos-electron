@@ -27,8 +27,10 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
       if (prescriptions) {
         const unfixedPrescriptions = prescriptions.filter((prescription) => {
           return (
-            fixedPrescriptions.every((fp) => fp.code !== prescription.code) &&
-            basketPrescriptions.every((bp) => bp.code !== prescription.code)
+            (fixedPrescriptions.every((fp) => fp.code !== prescription.code) &&
+              basketPrescriptions.every((bp) => bp.code !== prescription.code)) ||
+            fixedPrescriptions.some((fp) => fp.code === prescription.code && fp.amount !== prescription.amount) ||
+            basketPrescriptions.some((bp) => bp.code === prescription.code && bp.amount !== prescription.amount)
           );
         });
         setPrescriptions(unfixedPrescriptions);
