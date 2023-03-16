@@ -241,7 +241,7 @@ const RegisterPayment: React.FC<Props> = ({
   }, [open, registerMode, paymentType, salesTotal]);
 
   return (
-    <Modal open={open} size="none" onClose={onClose} className="w-1/3">
+    <Modal open={open} size="none" onClose={onClose} className={numberPad ? 'w-1/2' : 'w-1/3'}>
       <Modal.Header
         centered={false}
         onClose={onClose}
@@ -255,14 +255,16 @@ const RegisterPayment: React.FC<Props> = ({
         <Table border="row" className="table-fixed w-full">
           <Table.Body>
             <Table.Row>
-              <Table.Cell type="th" className="text-xl bg-red-100">
+              <Table.Cell type="th" className="w-1/3 text-xl bg-red-100">
                 {registerMode === 'Return' ? 'ご返金' : '合計'}
               </Table.Cell>
-              <Table.Cell className="text-right text-xl pr-4">¥{salesTotal.toLocaleString()}</Table.Cell>
+              <Table.Cell className="w-2/3 text-right text-xl pr-4">¥{salesTotal.toLocaleString()}</Table.Cell>
             </Table.Row>
             <Table.Row className={registerMode === 'Return' ? 'hidden' : ''}>
-              <Table.Cell type="th">お預かり</Table.Cell>
-              <Table.Cell>
+              <Table.Cell type="th" className="w-1/3">
+                お預かり
+              </Table.Cell>
+              <Table.Cell className="w-2/3">
                 <Form
                   className="space-y-2"
                   onSubmit={(e) => {
@@ -308,8 +310,10 @@ const RegisterPayment: React.FC<Props> = ({
               </Table.Cell>
             </Table.Row>
             <Table.Row className={registerMode === 'Return' ? 'hidden' : ''}>
-              <Table.Cell type="th">お釣り</Table.Cell>
-              <Table.Cell className="text-right pr-4">
+              <Table.Cell type="th" className="w-1/3">
+                お釣り
+              </Table.Cell>
+              <Table.Cell className="w-2/3 text-right pr-4">
                 ¥{toNumber(cashText) < salesTotal ? '0' : (toNumber(cashText) - salesTotal).toLocaleString()}
               </Table.Cell>
             </Table.Row>

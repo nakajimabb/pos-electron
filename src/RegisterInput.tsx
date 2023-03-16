@@ -67,7 +67,7 @@ const RegisterInput: React.FC<Props> = ({ open, registerItem, basketItems, setBa
   };
 
   return (
-    <Modal open={open && !!registerItem} size="none" onClose={onClose} className="w-1/3">
+    <Modal open={open && !!registerItem} size="none" onClose={onClose} className={numberPad ? 'w-1/2' : 'w-1/3'}>
       <Modal.Header centered={false} onClose={onClose}>
         {`${registerItem?.index}. ${registerItem?.name}`}
       </Modal.Header>
@@ -75,8 +75,10 @@ const RegisterInput: React.FC<Props> = ({ open, registerItem, basketItems, setBa
         <Table border="row" className="table-fixed w-full">
           <Table.Body>
             <Table.Row>
-              <Table.Cell type="th">金額</Table.Cell>
-              <Table.Cell>
+              <Table.Cell type="th" className="w-1/3">
+                金額
+              </Table.Cell>
+              <Table.Cell className="w-2/3">
                 <Form
                   onSubmit={(e) => {
                     if (numberPad) {

@@ -111,17 +111,19 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
         <Table border="row" className="table-fixed w-full">
           <Table.Body>
             <Table.Row>
-              <Table.Cell type="th">商品名</Table.Cell>
-              <Table.Cell>{basketItems[itemIndex]?.product.name}</Table.Cell>
+              <Table.Cell type="th" className="w-1/3">
+                商品名
+              </Table.Cell>
+              <Table.Cell className="w-2/3">{basketItems[itemIndex]?.product.name}</Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell type="th">
+              <Table.Cell type="th" className="w-1/3">
                 単価{' '}
                 {toNumber(basketItems[itemIndex]?.product.sellingPrice) === 0 && (
                   <span className="text-red-500 font-bold ml-2">0が設定されています!</span>
                 )}
               </Table.Cell>
-              <Table.Cell>
+              <Table.Cell className="w-2/3">
                 <Form onSubmit={save} className="space-y-2">
                   <Form.Text
                     id="inputPrice"
@@ -136,8 +138,10 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
               </Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell type="th">数量</Table.Cell>
-              <Table.Cell>
+              <Table.Cell type="th" className="w-1/3">
+                数量
+              </Table.Cell>
+              <Table.Cell className="w-2/3">
                 <Form
                   onSubmit={(e) => {
                     if (numberPad) {
@@ -170,8 +174,10 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
               </Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell type="th">値引き(金額)</Table.Cell>
-              <Table.Cell>
+              <Table.Cell type="th" className="w-1/3">
+                値引き(金額)
+              </Table.Cell>
+              <Table.Cell className="w-2/3">
                 <Form
                   onSubmit={(e) => {
                     if (numberPad) {
@@ -204,8 +210,10 @@ const RegisterModify: React.FC<Props> = ({ open, itemIndex, basketItems, setBask
               </Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell type="th">値引き(%)</Table.Cell>
-              <Table.Cell>
+              <Table.Cell type="th" className="w-1/3">
+                値引き(%)
+              </Table.Cell>
+              <Table.Cell className="w-2/3">
                 <Form
                   onSubmit={(e) => {
                     if (numberPad) {
