@@ -960,7 +960,7 @@ ipcMain.handle('getPrescriptions', (event, dateString) => {
         break;
     }
   });
-  return result;
+  return result.filter((data) => data.amount !== 0);
 });
 
 ipcMain.handle('getFixedPrescriptions', (event, dateString) => {

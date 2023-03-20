@@ -43,7 +43,6 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
                   if (onSuccess) onSuccess();
                 } else {
                   alert(`印刷できません。\nエラーコード：${res.code}`);
-                  window.electronAPI.deleteSaleWithDetails(sale.id);
                   if (onFailure) onFailure();
                 }
               };
@@ -130,14 +129,12 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
               printer.send();
             } else {
               alert(`印刷できません。\nエラーコード：${retcode}`);
-              window.electronAPI.deleteSaleWithDetails(sale.id);
               if (onFailure) onFailure();
             }
           }
         );
       } else {
         alert(`プリンターに接続できません。\nエラーコード：${data}`);
-        window.electronAPI.deleteSaleWithDetails(sale.id);
         if (onFailure) onFailure();
       }
     });

@@ -1,5 +1,6 @@
 interface Window {
   epson: any;
+  star: any;
   electronAPI: {
     fixFocus: () => Promise<void>;
     getAppVersion: () => Promise<any>;

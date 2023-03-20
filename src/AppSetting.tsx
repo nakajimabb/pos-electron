@@ -10,12 +10,13 @@ import { MAIL_DOMAIN } from './tools';
 import Loader from './components/Loader';
 
 const AppSetting: React.FC = () => {
-  const { setContextPrinterType, setContextInputMode, setContextNumberPad } = useAppContext();
+  const { setContextPrinterType, setContextPrinterBrand, setContextInputMode, setContextNumberPad } = useAppContext();
   const [shopCode, setShopCode] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [sipsDir, setSipsDir] = useState<string>('');
   const [printerType, setPrinterType] = useState<string>('Other');
   const [printerAddress, setPrinterAddress] = useState<string>('');
+  const [printerBrand, setPrinterBrand] = useState<string>('');
   const [printer, setPrinter] = useState<string>('');
   const [printers, setPrinters] = useState<{ label: string; value: string }[]>([]);
   const [inputMode, setInputMode] = useState<string>('Normal');
@@ -44,6 +45,8 @@ const AppSetting: React.FC = () => {
     if (printerTypeSetting) setPrinterType(printerTypeSetting.value);
     const printerAddressSetting = settings.find((setting) => setting.key === 'PRINTER_ADDRESS');
     if (printerAddressSetting) setPrinterAddress(printerAddressSetting.value);
+    const printerBrandSetting = settings.find((setting) => setting.key === 'PRINTER_BRAND');
+    if (printerBrandSetting) setPrinterBrand(printerBrandSetting.value);
     const printerInfos = (await window.electronAPI.getPrinters()) as PrinterInfo[];
     if (printerInfos) {
       setPrinters(
@@ -88,6 +91,9 @@ const AppSetting: React.FC = () => {
     }
     const ipRegExp = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     if (printerType === 'Receipt') {
+      if (!printerBrand.trim()) {
+        errorsData.push('プリンターメーカーを選択してください。');
+      }
       if (!printerAddress.trim()) {
         errorsData.push('プリンターIPアドレスを入力してください。');
       } else if (!ipRegExp.test(printerAddress.trim())) {
@@ -107,6 +113,8 @@ const AppSetting: React.FC = () => {
         await window.electronAPI.setAppSetting('PRINTER_TYPE', printerType);
         setContextPrinterType(printerType);
         await window.electronAPI.setAppSetting('PRINTER_ADDRESS', printerAddress);
+        await window.electronAPI.setAppSetting('PRINTER_BRAND', printerBrand);
+        setContextPrinterBrand(printerBrand);
         await window.electronAPI.setAppSetting('PRINTER', printer);
         await window.electronAPI.setAppSetting('INPUT_MODE', inputMode);
         setContextInputMode(inputMode);
@@ -199,7 +207,7 @@ const AppSetting: React.FC = () => {
               </div>
             </Flex>
             <Form.Label className="mt-1">プリンター種別</Form.Label>
-            <Grid cols="2" gap="2" className="mt-1">
+            <Grid cols="2" gap="2" className="mt-1 mb-2">
               <Form.Radio
                 id="radio1"
                 name="printer-type"
@@ -219,6 +227,17 @@ const AppSetting: React.FC = () => {
             </Grid>
             {printerType === 'Receipt' ? (
               <>
+                <Form.Label className="mt-1">プリンターメーカー</Form.Label>
+                <Form.Select
+                  className="w-1/2"
+                  value={printerBrand}
+                  options={[
+                    { label: '', value: '' },
+                    { label: 'スター精密', value: 'Star' },
+                    { label: 'EPSON', value: 'Epson' },
+                  ]}
+                  onChange={(e) => setPrinterBrand(e.target.value)}
+                />
                 <Form.Label className="mt-1">IPアドレス</Form.Label>
                 <Form.Text
                   value={printerAddress}
@@ -239,7 +258,7 @@ const AppSetting: React.FC = () => {
               </>
             )}
             <Form.Label className="mt-1">テンキー表示</Form.Label>
-            <Grid cols="3" gap="2" className="mt-1">
+            <Grid cols="3" gap="2" className="mt-1 mb-2">
               <Form.Radio
                 id="radio3"
                 name="number-pad"

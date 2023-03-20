@@ -19,9 +19,11 @@ export type ContextType = {
   fixedCostRates: FixedCostRateLocal[];
   printerType: 'Receipt' | 'Other';
   printerAddress: string;
+  printerBrand: string;
   inputMode: 'Normal' | 'Test';
   numberPad: boolean;
   setContextPrinterType: React.Dispatch<React.SetStateAction<string>>;
+  setContextPrinterBrand: React.Dispatch<React.SetStateAction<string>>;
   setContextInputMode: React.Dispatch<React.SetStateAction<string>>;
   setContextNumberPad: React.Dispatch<React.SetStateAction<boolean>>;
   addBundleDiscount: (basketItems: BasketItem[]) => BasketItem[];
@@ -35,9 +37,11 @@ const AppContext = createContext({
   fixedCostRates: [],
   printerType: 'Other',
   printerAddress: '',
+  printerBrand: '',
   inputMode: 'Normal',
   numberPad: false,
   setContextPrinterType: null,
+  setContextPrinterBrand: null,
   setContextInputMode: null,
   setContextNumberPad: null,
   addBundleDiscount: (basketItems: BasketItem[]) => basketItems,
@@ -55,6 +59,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
   const [fixedCostRates, setFixedCostRates] = useState<FixedCostRateLocal[]>([]);
   const [printerType, setPrinterType] = useState<'Receipt' | 'Other'>('Other');
   const [printerAddress, setPrinterAddress] = useState<string>('');
+  const [printerBrand, setPrinterBrand] = useState<string>('');
   const [inputMode, setInputMode] = useState<'Normal' | 'Test'>('Normal');
   const [numberPad, setNumberPad] = useState<boolean>(false);
 
@@ -83,6 +88,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     setPrinterAddress(printerAddressSetting);
   }, []);
 
+  const getPrinterBrand = useCallback(async () => {
+    const printerBrandSetting = await window.electronAPI.getAppSetting('PRINTER_BRAND');
+    setPrinterBrand(printerBrandSetting);
+  }, []);
+
   const getInputMode = useCallback(async () => {
     const inputModeSetting = await window.electronAPI.getAppSetting('INPUT_MODE');
     setInputMode(inputModeSetting);
@@ -99,6 +109,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     getFixedCostRates();
     getPrinterType();
     getPrinterAddress();
+    getPrinterBrand();
     getInputMode();
     getNumberPad();
   }, [
@@ -107,6 +118,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     getFixedCostRates,
     getPrinterType,
     getPrinterAddress,
+    getPrinterBrand,
     getInputMode,
     getNumberPad,
   ]);
@@ -192,9 +204,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         fixedCostRates,
         printerType,
         printerAddress,
+        printerBrand,
         inputMode,
         numberPad,
         setContextPrinterType: setPrinterType,
+        setContextPrinterBrand: setPrinterBrand,
         setContextInputMode: setInputMode,
         setContextNumberPad: setNumberPad,
         addBundleDiscount,

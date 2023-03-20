@@ -4,13 +4,14 @@ import { format } from 'date-fns';
 import { Alert, Button, Card, Flex, Form, Table } from './components';
 import { useAppContext } from './AppContext';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
-import { printReceipt } from './eposPrinter';
+import { printReceipt as printReceiptEpson } from './eposPrinter';
+import { printReceipt as printReceiptStar } from './starPrinter';
 import Loader from './components/Loader';
 
 const MAX_SEARCH = 50;
 
 const ReceiptList: React.FC = () => {
-  const { currentShop, printerType, inputMode } = useAppContext();
+  const { currentShop, printerType, printerBrand, inputMode } = useAppContext();
   const [sales, setSales] = useState<[string, SaleLocal, string][]>();
   const [dateTimeFrom, setDateTimeFrom] = useState<Date>();
   const [dateTimeTo, setDateTimeTo] = useState<Date>();
@@ -153,15 +154,30 @@ const ReceiptList: React.FC = () => {
                             onClick={async () => {
                               setLoading(true);
                               if (printerType === 'Receipt') {
-                                await printReceipt(
-                                  saleData.id,
-                                  () => {
-                                    setLoading(false);
-                                  },
-                                  () => {
-                                    setLoading(false);
-                                  }
-                                );
+                                if (printerBrand === 'Star') {
+                                  await printReceiptStar(
+                                    saleData.id,
+                                    () => {
+                                      setLoading(false);
+                                    },
+                                    () => {
+                                      setLoading(false);
+                                    }
+                                  );
+                                } else if (printerBrand === 'Epson') {
+                                  await printReceiptEpson(
+                                    saleData.id,
+                                    () => {
+                                      setLoading(false);
+                                    },
+                                    () => {
+                                      setLoading(false);
+                                    }
+                                  );
+                                } else {
+                                  alert('レシートプリンターが指定されていません。');
+                                  setLoading(false);
+                                }
                               } else {
                                 await window.electronAPI.createReceiptWindow(saleData.id);
                                 setLoading(false);

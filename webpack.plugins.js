@@ -8,6 +8,8 @@ module.exports = [
     patterns: [
       { from: 'icons', to: 'icons' },
       { from: 'epos-2.22.0.js', to: 'epos-2.22.0.js' },
+      { from: 'StarWebPrintBuilder.js', to: 'StarWebPrintBuilder.js' },
+      { from: 'StarWebPrintTrader.js', to: 'StarWebPrintTrader.js' },
     ],
   }),
   new webpack.ProvidePlugin({

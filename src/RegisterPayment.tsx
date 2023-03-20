@@ -4,7 +4,8 @@ import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
 import { createId, toNumber, PATIENT_DIVISION } from './tools';
-import { printReceipt } from './eposPrinter';
+import { printReceipt as printReceiptEpson } from './eposPrinter';
+import { printReceipt as printReceiptStar } from './starPrinter';
 import Loader from './components/Loader';
 
 type Props = {
@@ -28,7 +29,7 @@ const RegisterPayment: React.FC<Props> = ({
   setOpenPrescriptions,
   onClose,
 }) => {
-  const { currentShop, printerType, inputMode, numberPad } = useAppContext();
+  const { currentShop, printerType, printerBrand, inputMode, numberPad } = useAppContext();
   const [cashText, setCashText] = useState<string>('0');
   const [inputFocus, setInputFocus] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -112,10 +113,24 @@ const RegisterPayment: React.FC<Props> = ({
     await window.electronAPI.createSaleWithDetails(sale, details);
     if (basketItems.some((item) => item.outputReceipt)) {
       if (printerType === 'Receipt') {
-        await printReceipt(sale.id, callback, () => {
-          window.electronAPI.setStore('SYNC_FIRESTORE', '1');
+        if (printerBrand === 'Star') {
+          await printReceiptStar(sale.id, callback, async () => {
+            await window.electronAPI.deleteSaleWithDetails(sale.id);
+            await window.electronAPI.setStore('SYNC_FIRESTORE', '1');
+            setLoading(false);
+          });
+        } else if (printerBrand === 'Epson') {
+          await printReceiptEpson(sale.id, callback, async () => {
+            await window.electronAPI.deleteSaleWithDetails(sale.id);
+            await window.electronAPI.setStore('SYNC_FIRESTORE', '1');
+            setLoading(false);
+          });
+        } else {
+          alert('レシートプリンターが指定されていません。');
+          await window.electronAPI.deleteSaleWithDetails(sale.id);
+          await window.electronAPI.setStore('SYNC_FIRESTORE', '1');
           setLoading(false);
-        });
+        }
       } else {
         await window.electronAPI.createReceiptWindow(sale.id);
         callback();
