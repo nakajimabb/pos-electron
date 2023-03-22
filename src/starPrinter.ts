@@ -29,7 +29,7 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
     const trader = new window.star.StarWebPrintTrader({ url: `http://${printerAddress}/StarWebPRNT/SendMessage` });
 
     trader.onReceive = function (response: any) {
-      if (response.traderSuccess) {
+      if (response.traderSuccess === 'true') {
         if (onSuccess) onSuccess();
       } else {
         let msg = '印刷できません。\n\n';
@@ -112,7 +112,7 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
             saleDetail.productName
           }\n`,
         });
-        request += builder.createAlignmentElement({ position: 'right' });
+        request += builder.createAlignmentElement({ position: 'center' });
         let quantityAndUnit = '';
         if (saleDetail.productCode && saleDetail.quantity > 1) {
           quantityAndUnit = `${saleDetail.quantity} x @${(
@@ -120,30 +120,30 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
             0
           ).toLocaleString()}`;
         }
+        const quantityUnitAndPriceText = `${quantityAndUnit}  ¥${(
+          Number(saleDetail.sellingPrice) * saleDetail.quantity * registerSign +
+          0
+        )?.toLocaleString()}`;
         request += builder.createTextElement({
-          data: `${quantityAndUnit}  ¥${(
-            Number(saleDetail.sellingPrice) * saleDetail.quantity * registerSign +
-            0
-          )?.toLocaleString()} \n`,
+          data: `${''.padStart(31 - quantityUnitAndPriceText.length, ' ')}${quantityUnitAndPriceText}\n`,
         });
       });
     request += builder.createTextElement({ data: '\n' });
     request += builder.createAlignmentElement({ position: 'center' });
     request += builder.createTextElement({ data: `${''.padStart(32, '-')}\n` });
-    request += builder.createAlignmentElement({ position: 'left' });
 
     const priceTotalText = `¥${priceTotal.toLocaleString()}`;
     request += builder.createTextElement({
-      data: `小計${''.padStart(28 - priceTotalText.length, ' ')}${priceTotalText}\n`,
+      data: `小計${''.padStart(27 - priceTotalText.length, ' ')}${priceTotalText}\n`,
     });
     request += builder.createTextElement({ data: '\n' });
     const taxFreeTotalText = `¥${(Number(sale?.salesTaxFreeTotal) + 0).toLocaleString()}`;
     request += builder.createTextElement({
-      data: `非課税対象${''.padStart(10 - taxFreeTotalText.length, ' ')}${taxFreeTotalText}\n`,
+      data: `非課税対象${''.padStart(9 - taxFreeTotalText.length, ' ')}${taxFreeTotalText}${''.padStart(12, ' ')}\n`,
     });
     const reducedTotalText = `¥${(priceReducedTotal + 0).toLocaleString()}`;
     request += builder.createTextElement({
-      data: `    8%対象${''.padStart(10 - reducedTotalText.length, ' ')}${reducedTotalText}`,
+      data: `    8%対象${''.padStart(9 - reducedTotalText.length, ' ')}${reducedTotalText}`,
     });
     const reducedTaxText = `¥${(Number(sale?.taxReducedTotal) + 0).toLocaleString()}`;
     request += builder.createTextElement({
@@ -151,7 +151,7 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
     });
     const normalTotalText = `¥${(priceNormalTotal + 0).toLocaleString()}`;
     request += builder.createTextElement({
-      data: `   10%対象${''.padStart(10 - normalTotalText.length, ' ')}${normalTotalText}`,
+      data: `   10%対象${''.padStart(9 - normalTotalText.length, ' ')}${normalTotalText}`,
     });
     const normalTaxText = `¥${(Number(sale?.taxNormalTotal) + 0).toLocaleString()}`;
     request += builder.createTextElement({
@@ -162,7 +162,7 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
     const totalString = `¥${sale?.salesTotal.toLocaleString()}`;
     request += builder.createTextElement({ data: totalTitle });
     request += builder.createTextElement({
-      data: `${''.padStart(31 - (totalTitle.length + totalString.length) * 2, ' ')}`,
+      data: `${''.padStart(30 - (totalTitle.length + totalString.length) * 2, ' ')}`,
     });
     request += builder.createTextElement({ emphasis: true });
     request += builder.createTextElement({ width: 2, data: `${totalString}\n` });
@@ -171,13 +171,14 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
     if (sale?.status === 'Sales' && saleDetails.some((detail) => detail.outputReceipt)) {
       const cashAmountText = `¥${sale?.cashAmount.toLocaleString()}`;
       request += builder.createTextElement({
-        data: `お預かり${''.padStart(24 - cashAmountText.length, ' ')}${cashAmountText}\n`,
+        data: `お預かり${''.padStart(23 - cashAmountText.length, ' ')}${cashAmountText}\n`,
       });
       const changeText = `¥${(Number(sale?.cashAmount) - Number(sale?.salesTotal)).toLocaleString()}`;
       request += builder.createTextElement({
-        data: `お釣り${''.padStart(26 - changeText.length, ' ')}${changeText}\n`,
+        data: `お釣り${''.padStart(25 - changeText.length, ' ')}${changeText}\n`,
       });
     }
+    request += builder.createAlignmentElement({ position: 'left' });
     request += builder.createTextElement({ data: '\n' });
     request += builder.createTextElement({ data: '※印は、軽減税率対象商品です。\n' });
     request += builder.createTextElement({ data: '★印は、セルフメディケーション\n' });
@@ -186,8 +187,6 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
     request += builder.createTextElement({ data: '\n' });
     request += builder.createTextElement({ characterspace: 0 });
     request += builder.createCutPaperElement({ feed: true });
-
-    console.log(request);
 
     trader.sendMessage({ request: request });
   }
