@@ -166,19 +166,29 @@ const DailyCashReport: React.FC = () => {
           reportItemsData['inclusivePriceNormalTotal'] += inclusivePriceNormalTotal;
           reportItemsData['inclusivePriceReducedTotal'] += inclusivePriceReducedTotal;
           reportItemsData['priceTaxFreeTotal'] += priceTaxFreeTotal;
-          reportItemsData['exclusiveTaxNormalTotal'] += Math.floor((exclusivePriceNormalTotal * 10) / 100);
-          reportItemsData['exclusiveTaxReducedTotal'] += Math.floor((exclusivePriceReducedTotal * 8) / 100);
-          reportItemsData['inclusiveTaxNormalTotal'] += Math.floor((inclusivePriceNormalTotal * 10) / (100 + 10));
-          reportItemsData['inclusiveTaxReducedTotal'] += Math.floor((inclusivePriceReducedTotal * 8) / (100 + 8));
+          reportItemsData['exclusiveTaxNormalTotal'] +=
+            Math.sign(exclusivePriceNormalTotal) * Math.floor(Math.abs((exclusivePriceNormalTotal * 10) / 100));
+          reportItemsData['exclusiveTaxReducedTotal'] +=
+            Math.sign(exclusivePriceReducedTotal) * Math.floor(Math.abs((exclusivePriceReducedTotal * 8) / 100));
+          reportItemsData['inclusiveTaxNormalTotal'] +=
+            Math.sign(inclusivePriceNormalTotal) * Math.floor(Math.abs((inclusivePriceNormalTotal * 10) / (100 + 10)));
+          reportItemsData['inclusiveTaxReducedTotal'] +=
+            Math.sign(inclusivePriceReducedTotal) * Math.floor(Math.abs((inclusivePriceReducedTotal * 8) / (100 + 8)));
           if (sale.paymentType === 'Cash') {
-            reportItemsData['exclusiveTaxNormalCashTotal'] += Math.floor((exclusivePriceNormalTotal * 10) / 100);
-            reportItemsData['exclusiveTaxReducedCashTotal'] += Math.floor((exclusivePriceReducedTotal * 8) / 100);
+            reportItemsData['exclusiveTaxNormalCashTotal'] +=
+              Math.sign(exclusivePriceNormalTotal) * Math.floor(Math.abs((exclusivePriceNormalTotal * 10) / 100));
+            reportItemsData['exclusiveTaxReducedCashTotal'] +=
+              Math.sign(exclusivePriceReducedTotal) * Math.floor(Math.abs((exclusivePriceReducedTotal * 8) / 100));
           } else if (sale.paymentType === 'Credit') {
-            reportItemsData['exclusiveTaxNormalCreditTotal'] += Math.floor((exclusivePriceNormalTotal * 10) / 100);
-            reportItemsData['exclusiveTaxReducedCreditTotal'] += Math.floor((exclusivePriceReducedTotal * 8) / 100);
+            reportItemsData['exclusiveTaxNormalCreditTotal'] +=
+              Math.sign(exclusivePriceNormalTotal) * Math.floor(Math.abs((exclusivePriceNormalTotal * 10) / 100));
+            reportItemsData['exclusiveTaxReducedCreditTotal'] +=
+              Math.sign(exclusivePriceReducedTotal) * Math.floor(Math.abs((exclusivePriceReducedTotal * 8) / 100));
           } else if (sale.paymentType === 'Digital') {
-            reportItemsData['exclusiveTaxNormalDigitalTotal'] += Math.floor((exclusivePriceNormalTotal * 10) / 100);
-            reportItemsData['exclusiveTaxReducedDigitalTotal'] += Math.floor((exclusivePriceReducedTotal * 8) / 100);
+            reportItemsData['exclusiveTaxNormalDigitalTotal'] +=
+              Math.sign(exclusivePriceNormalTotal) * Math.floor(Math.abs((exclusivePriceNormalTotal * 10) / 100));
+            reportItemsData['exclusiveTaxReducedDigitalTotal'] +=
+              Math.sign(exclusivePriceReducedTotal) * Math.floor(Math.abs((exclusivePriceReducedTotal * 8) / 100));
           }
 
           if (sale.status === 'Return') {
@@ -188,10 +198,12 @@ const DailyCashReport: React.FC = () => {
               inclusivePriceNormalTotal +
               inclusivePriceReducedTotal +
               priceTaxFreeTotal +
-              Math.floor((exclusivePriceNormalTotal * 10) / 100) +
-              Math.floor((exclusivePriceReducedTotal * 8) / 100) +
-              Math.floor((inclusivePriceNormalTotal * 10) / (100 + 10)) +
-              Math.floor((inclusivePriceReducedTotal * 8) / (100 + 8));
+              Math.sign(exclusivePriceNormalTotal) * Math.floor(Math.abs((exclusivePriceNormalTotal * 10) / 100)) +
+              Math.sign(exclusivePriceReducedTotal) * Math.floor(Math.abs((exclusivePriceReducedTotal * 8) / 100)) +
+              Math.sign(inclusivePriceNormalTotal) *
+                Math.floor(Math.abs((inclusivePriceNormalTotal * 10) / (100 + 10))) +
+              Math.sign(inclusivePriceReducedTotal) *
+                Math.floor(Math.abs((inclusivePriceReducedTotal * 8) / (100 + 8)));
           }
         })
       );
@@ -349,8 +361,11 @@ const DailyCashReport: React.FC = () => {
                       <Table.Cell className="w-2/3">客単価</Table.Cell>
                       <Table.Cell className="text-right w-1/3">
                         {reportItems['customerCountTotal'] > 0
-                          ? `¥${Math.floor(
-                              reportItems['customerAmountTotal'] / reportItems['customerCountTotal']
+                          ? `¥${(
+                              Math.sign(reportItems['customerAmountTotal']) *
+                              Math.floor(
+                                Math.abs(reportItems['customerAmountTotal'] / reportItems['customerCountTotal'])
+                              )
                             )?.toLocaleString()}`
                           : 0}
                       </Table.Cell>

@@ -242,7 +242,6 @@ const AppSetting: React.FC = () => {
                 <Form.Text
                   value={printerAddress}
                   className="w-1/2"
-                  disabled={!launched}
                   onChange={(e) => setPrinterAddress(e.target.value)}
                 />
               </>
@@ -284,7 +283,6 @@ const AppSetting: React.FC = () => {
                 size="md"
                 label="通常モード"
                 checked={inputMode === 'Normal'}
-                disabled={!launched}
                 onChange={(e) => setInputMode('Normal')}
               />
               <Form.Radio
@@ -293,7 +291,6 @@ const AppSetting: React.FC = () => {
                 size="md"
                 label="テストモード"
                 checked={inputMode === 'Test'}
-                disabled={!launched}
                 onChange={(e) => setInputMode('Test')}
               />
             </Grid>

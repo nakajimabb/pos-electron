@@ -168,11 +168,25 @@ export async function printReceipt(saleId: string, onSuccess?: () => any, onFail
     request += builder.createTextElement({ width: 2, data: `${totalString}\n` });
     request += builder.createTextElement({ width: 1 });
     request += builder.createTextElement({ emphasis: false });
-    if (sale?.status === 'Sales' && saleDetails.some((detail) => detail.outputReceipt)) {
+    if (sale?.status === 'Sales' && saleDetails.every((detail) => detail.outputReceipt)) {
       const cashAmountText = `¥${sale?.cashAmount.toLocaleString()}`;
-      request += builder.createTextElement({
-        data: `お預かり${''.padStart(23 - cashAmountText.length, ' ')}${cashAmountText}\n`,
-      });
+      switch (sale.paymentType) {
+        case 'Cash':
+          request += builder.createTextElement({
+            data: `お預かり${''.padStart(23 - cashAmountText.length, ' ')}${cashAmountText}\n`,
+          });
+          break;
+        case 'Credit':
+          request += builder.createTextElement({
+            data: `クレジット${''.padStart(21 - cashAmountText.length, ' ')}${cashAmountText}\n`,
+          });
+          break;
+        case 'Digital':
+          request += builder.createTextElement({
+            data: `電子マネー${''.padStart(21 - cashAmountText.length, ' ')}${cashAmountText}\n`,
+          });
+          break;
+      }
       const changeText = `¥${(Number(sale?.cashAmount) - Number(sale?.salesTotal)).toLocaleString()}`;
       request += builder.createTextElement({
         data: `お釣り${''.padStart(25 - changeText.length, ' ')}${changeText}\n`,
