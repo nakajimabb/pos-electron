@@ -329,6 +329,9 @@ export type Prescription = {
   patientName: string;
   patientKana: string;
   amount: number;
+  copayment: number;
+  containerCost: number;
+  homeTreatment: number;
 };
 
 export const deliveryPath = (shopCode: string, deliveryNumber: number | undefined = undefined) =>

@@ -43,34 +43,110 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
   };
 
   const save = async (prescription: Prescription) => {
-    const registerItem = await window.electronAPI.findRegisterItemByPk(1);
-    if (registerItem) {
-      const basketItem: any = {
-        product: {
-          abbr: '',
-          code: registerItem.code,
-          kana: '',
-          name: registerItem.name,
-          hidden: false,
-          costPrice: null,
-          avgCostPrice: null,
-          sellingPrice: prescription.amount,
-          stockTaxClass: null,
-          sellingTaxClass: registerItem.taxClass,
-          stockTax: null,
-          sellingTax: registerItem.tax,
-          selfMedication: false,
-          supplierRef: null,
-          categoryRef: null,
-          note: '',
-        },
-        division: registerItem.division,
-        outputReceipt: registerItem.outputReceipt,
-        quantity: 1,
-        prescription,
-      };
-      setBasketItems([...basketItems, basketItem]);
+    const newBasketItems: BasketItem[] = [];
+    if (prescription.amount !== 0) {
+      const registerItem = await window.electronAPI.findRegisterItemByPk(1);
+      if (registerItem) {
+        const basketItem: BasketItem = {
+          product: {
+            abbr: '',
+            code: registerItem.code,
+            kana: '',
+            name: registerItem.name,
+            note: '',
+            hidden: false,
+            unregistered: false,
+            costPrice: null,
+            avgCostPrice: null,
+            sellingPrice: prescription.amount,
+            stockTaxClass: null,
+            sellingTaxClass: registerItem.taxClass,
+            stockTax: null,
+            sellingTax: registerItem.tax,
+            selfMedication: false,
+            supplierCode: null,
+            noReturn: null,
+            createdAt: null,
+            updatedAt: null,
+          },
+          division: registerItem.division,
+          outputReceipt: registerItem.outputReceipt,
+          quantity: 1,
+          prescription,
+        };
+        newBasketItems.push(basketItem);
+        1;
+      }
     }
+    if (prescription.containerCost !== 0) {
+      const registerItem = await window.electronAPI.findRegisterItemByPk(3);
+      if (registerItem) {
+        const basketItem: BasketItem = {
+          product: {
+            abbr: '',
+            code: registerItem.code,
+            kana: '',
+            name: registerItem.name,
+            note: '',
+            hidden: false,
+            unregistered: false,
+            costPrice: null,
+            avgCostPrice: null,
+            sellingPrice: prescription.containerCost,
+            stockTaxClass: null,
+            sellingTaxClass: registerItem.taxClass,
+            stockTax: null,
+            sellingTax: registerItem.tax,
+            selfMedication: false,
+            supplierCode: null,
+            noReturn: null,
+            createdAt: null,
+            updatedAt: null,
+          },
+          division: registerItem.division,
+          outputReceipt: registerItem.outputReceipt,
+          quantity: 1,
+          prescription,
+        };
+        newBasketItems.push(basketItem);
+        1;
+      }
+    }
+    if (prescription.homeTreatment !== 0) {
+      const registerItem = await window.electronAPI.findRegisterItemByPk(7);
+      if (registerItem) {
+        const basketItem: BasketItem = {
+          product: {
+            abbr: '',
+            code: registerItem.code,
+            kana: '',
+            name: registerItem.name,
+            note: '',
+            hidden: false,
+            unregistered: false,
+            costPrice: null,
+            avgCostPrice: null,
+            sellingPrice: prescription.homeTreatment,
+            stockTaxClass: null,
+            sellingTaxClass: registerItem.taxClass,
+            stockTax: null,
+            sellingTax: registerItem.tax,
+            selfMedication: false,
+            supplierCode: null,
+            noReturn: null,
+            createdAt: null,
+            updatedAt: null,
+          },
+          division: registerItem.division,
+          outputReceipt: registerItem.outputReceipt,
+          quantity: 1,
+          prescription,
+        };
+        newBasketItems.push(basketItem);
+        1;
+      }
+    }
+    setBasketItems([...basketItems, ...newBasketItems]);
     onClose();
   };
 

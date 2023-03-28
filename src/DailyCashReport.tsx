@@ -5,7 +5,7 @@ import { startOfToday, startOfTomorrow } from 'date-fns';
 import { Button, Flex, Table } from './components';
 import { useAppContext } from './AppContext';
 import { SaleLocal, SaleDetailLocal, RegisterStatusLocal } from './realmConfig';
-import { Divisions } from './tools';
+import { Divisions, OTC_DIVISION, OTC_REDUCED_DIVISION } from './tools';
 
 const DailyCashReport: React.FC = () => {
   const { currentShop, inputMode } = useAppContext();
@@ -104,6 +104,9 @@ const DailyCashReport: React.FC = () => {
           let inclusivePriceReducedTotal = 0;
           let priceTaxFreeTotal = 0;
 
+          let otcPriceNormalTotal = 0;
+          let otcPriceReducedTotal = 0;
+
           reportItemsData['customerCountTotal'] += 1;
 
           if (sale.status === 'Return') {
@@ -128,7 +131,7 @@ const DailyCashReport: React.FC = () => {
           )) as SaleDetailLocal[];
 
           saleDetailLocals.forEach((detail) => {
-            const amount = Number(detail.sellingPrice) * detail.quantity * registerSign;
+            const amount = (Number(detail.sellingPrice) * detail.quantity - detail.discount) * registerSign;
             reportItemsData['customerAmountTotal'] += amount;
             if (sale.paymentType === 'Cash') {
               reportItemsData['cashAmountTotal'] += amount;
@@ -138,11 +141,16 @@ const DailyCashReport: React.FC = () => {
               reportItemsData['digitalAmountTotal'] += amount;
             }
             reportItemsData['detailsCountTotal'] += 1;
-            reportItemsData[`division${detail.division}CountTotal`] += 1;
-            reportItemsData[`division${detail.division}AmountTotal`] += amount + detail.discount * -1 * registerSign;
+
+            let division = detail.division;
+            if (detail.division === OTC_DIVISION && detail.sellingTax === 8) {
+              division = OTC_REDUCED_DIVISION;
+            }
+            reportItemsData[`division${division}CountTotal`] += 1;
+            reportItemsData[`division${division}AmountTotal`] += amount;
             if (detail.discount !== 0) {
-              reportItemsData[`division${detail.division}DiscountCountTotal`] += 1;
-              reportItemsData[`division${detail.division}DiscountAmountTotal`] += detail.discount * -1 * registerSign;
+              reportItemsData[`division${division}DiscountCountTotal`] += 1;
+              reportItemsData[`division${division}DiscountAmountTotal`] += detail.discount * -1 * registerSign;
             }
             if (detail.sellingTaxClass === 'exclusive') {
               if (detail.sellingTax === 10) {
@@ -159,7 +167,20 @@ const DailyCashReport: React.FC = () => {
             } else {
               priceTaxFreeTotal += amount;
             }
+
+            if (detail.division === OTC_DIVISION && detail.sellingTaxClass === 'exclusive') {
+              if (detail.sellingTax === 10) {
+                otcPriceNormalTotal += amount;
+              } else if (detail.sellingTax === 8) {
+                otcPriceReducedTotal += amount;
+              }
+            }
           });
+          // OTC部門の金額に外税加算
+          reportItemsData[`division${OTC_DIVISION}AmountTotal`] +=
+            Math.sign(otcPriceNormalTotal) * Math.floor(Math.abs((otcPriceNormalTotal * 10) / 100));
+          reportItemsData[`division${OTC_REDUCED_DIVISION}AmountTotal`] +=
+            Math.sign(otcPriceReducedTotal) * Math.floor(Math.abs((otcPriceReducedTotal * 8) / 100));
 
           reportItemsData['exclusivePriceNormalTotal'] += exclusivePriceNormalTotal;
           reportItemsData['exclusivePriceReducedTotal'] += exclusivePriceReducedTotal;

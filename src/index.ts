@@ -720,6 +720,7 @@ ipcMain.handle('findRegisterItems', (event, conds) => {
   if (conds) {
     registerItems = registerItems.filtered(conds);
   }
+  registerItems = registerItems.sorted('sortOrder');
   result = registerItems.map((registerItem) => {
     return {
       index: registerItem.index,
@@ -921,6 +922,9 @@ ipcMain.handle('getPrescriptions', (event, dateString) => {
       patientName: '',
       patientKana: '',
       amount: 0,
+      copayment: 0,
+      containerCost: 0,
+      homeTreatment: 0,
     };
     lines.forEach((line) => {
       const cols = line.split(',');
@@ -934,7 +938,10 @@ ipcMain.handle('getPrescriptions', (event, dateString) => {
             data.sequence = Number(cols[2]);
           }
         } else if (cols[0] === '5') {
-          data.amount = Number(cols[13]);
+          data.copayment = Number(cols[13]);
+          if (cols[14]) data.containerCost = Number(cols[14]);
+          if (cols[15]) data.homeTreatment = Number(cols[15]);
+          data.amount = data.copayment + data.containerCost + data.homeTreatment;
         }
       }
     });
@@ -980,6 +987,9 @@ ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
       patientName: '',
       patientKana: '',
       amount: 0,
+      copayment: 0,
+      containerCost: 0,
+      homeTreatment: 0,
     };
     const line = lines[0];
     const cols = line.split(',');
@@ -988,7 +998,10 @@ ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
       data.sequence = Number(cols[1]);
       data.patientName = cols[2];
       data.patientKana = cols[3];
-      data.amount = Number(cols[4]);
+      data.copayment = Number(cols[4]);
+      if (cols[5]) data.containerCost = Number(cols[5]);
+      if (cols[6]) data.homeTreatment = Number(cols[6]);
+      data.amount = data.copayment + data.containerCost + data.homeTreatment;
     }
     result.push(data);
   });
@@ -1006,7 +1019,9 @@ ipcMain.handle('setFixedPrescription', (event, prescription: Prescription) => {
     prescription.sequence.toString(),
     prescription.patientName,
     prescription.patientKana,
-    prescription.amount.toString(),
+    prescription.copayment.toString(),
+    prescription.containerCost.toString(),
+    prescription.homeTreatment.toString(),
   ];
   var buf = iconv.encode(data.join(','), 'Shift_JIS');
   fs.write(fd, buf, 0, buf.length, (error) => {

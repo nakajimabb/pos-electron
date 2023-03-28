@@ -47,7 +47,7 @@ import {
   SaleDetailLocal,
   SyncDateTime,
 } from './realmConfig';
-import { MAIL_DOMAIN, OTC_DIVISION } from './tools';
+import { MAIL_DOMAIN, OTC_CODE, OTC_DIVISION, OTC_REDUCED_CODE } from './tools';
 import { decipher } from './encryption';
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -352,7 +352,11 @@ export const syncFirestore = async () => {
             const detailRef = doc(collection(db, 'sales', saleRef.id, 'saleDetails'), saleDetailLocal.index.toString());
             transaction.set(detailRef, detail);
 
-            if (saleDetailLocal.productCode && saleDetailLocal.division === OTC_DIVISION) {
+            if (
+              saleDetailLocal.productCode &&
+              saleDetailLocal.division === OTC_DIVISION &&
+              ![OTC_CODE, OTC_REDUCED_CODE].includes(saleDetailLocal.productCode)
+            ) {
               const registerSign = detail.status === 'Return' ? -1 : 1;
               const incr = -saleDetailLocal.quantity * registerSign;
               const productBulk = realm

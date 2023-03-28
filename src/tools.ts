@@ -115,13 +115,17 @@ export const toDateString = (date: Date, format: string) => {
 
 export const PATIENT_DIVISION = '1';
 export const OTC_DIVISION = '5';
+export const OTC_REDUCED_DIVISION = '6';
+export const OTC_CODE = '9014';
+export const OTC_REDUCED_CODE = '9016';
 
 export const Divisions: { [code: string]: string } = {
   '1': '患者負担金',
   '2': '小分け',
   '3': '容器',
   '4': '負担金調整',
-  '5': 'OTC',
+  '5': 'OTC（10%）',
+  '6': 'OTC（8%）',
   '7': '居宅管理療養費',
   '8': '患者負担送料',
   '9': 'レジ袋',
