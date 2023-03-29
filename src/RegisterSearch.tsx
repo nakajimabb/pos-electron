@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Card, Flex, Form, Modal, Table } from './components';
 import { ProductLocal, ProductSellingPriceLocal } from './realmConfig';
+import { toAscii, toHankana } from './tools';
 
 const PER_PAGE = 10;
 
@@ -24,10 +25,10 @@ const RegisterSearch: React.FC<Props> = ({ open, setProductCode, findProduct, on
   const queryProducts = (action: 'head' | 'prev' | 'next') => async () => {
     try {
       setError('');
-      const searchText = search.text.trim();
+      const searchText = toHankana(toAscii(search.text.trim().toUpperCase()));
       let conds = '';
       if (searchText) {
-        conds = `name CONTAINS '${searchText}' OR code CONTAINS '${searchText}'`;
+        conds = `name CONTAINS '${searchText}' OR abbr CONTAINS '${searchText}' OR code CONTAINS '${searchText}'`;
       }
 
       let nextPage = 0;

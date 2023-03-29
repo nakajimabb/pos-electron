@@ -47,7 +47,7 @@ import {
   SaleDetailLocal,
   SyncDateTime,
 } from './realmConfig';
-import { MAIL_DOMAIN, OTC_CODE, OTC_DIVISION, OTC_REDUCED_CODE } from './tools';
+import { MAIL_DOMAIN, OTC_CODE, OTC_DIVISION, OTC_REDUCED_CODE, toAscii, toHankana } from './tools';
 import { decipher } from './encryption';
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -150,7 +150,7 @@ export const updateLocalDb = async () => {
         'Product',
         {
           code: product.code ?? '',
-          abbr: product.abbr ?? '',
+          abbr: toHankana(toAscii(product.name.toUpperCase().replace(/\s+/g, ''))) ?? '',
           kana: product.kana ?? '',
           name: product.name ?? '',
           note: product.note ?? '',
