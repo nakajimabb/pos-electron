@@ -182,6 +182,7 @@ const ShortcutEdit: React.FC = () => {
                           placeholder="商品コード"
                           className="mb-3 sm:mb-0"
                           value={productCode}
+                          inputMode="numeric"
                           onChange={(e) => setProductCode(e.target.value.trim())}
                         />
                       </Form>

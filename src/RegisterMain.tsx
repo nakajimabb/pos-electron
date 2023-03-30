@@ -272,6 +272,7 @@ const RegisterMain: React.FC = () => {
                   disabled={registerClosed}
                   className="mb-3 sm:mb-0"
                   value={productCode}
+                  inputMode="numeric"
                   onChange={(e) => setProductCode(e.target.value.trim())}
                 />
               </Form>

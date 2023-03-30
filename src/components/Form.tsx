@@ -37,6 +37,7 @@ type InputProps = {
   innerRef?: React.RefObject<HTMLInputElement>;
   className?: string;
   style?: CSSProperties;
+  inputMode?: 'text' | 'search' | 'email' | 'tel' | 'url' | 'none' | 'numeric' | 'decimal';
 };
 
 const Input: (type: InputType) => React.FC<InputProps> =
@@ -60,6 +61,7 @@ const Input: (type: InputType) => React.FC<InputProps> =
     innerRef,
     className,
     style,
+    inputMode,
   }) => {
     const padding = { sm: 'px-2 py-1', md: 'px-3 py-1.5', lg: 'px-4 py-2' };
     const textSize = { sm: 'text-sm', md: 'text-base', lg: 'text-lg' };
@@ -92,6 +94,7 @@ const Input: (type: InputType) => React.FC<InputProps> =
           className
         )}
         style={style}
+        inputMode={inputMode}
       />
     );
 

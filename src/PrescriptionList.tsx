@@ -44,7 +44,7 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
 
   const save = async (prescription: Prescription) => {
     const newBasketItems: BasketItem[] = [];
-    if (prescription.amount !== 0) {
+    if (prescription.copayment !== 0) {
       const registerItem = await window.electronAPI.findRegisterItemByPk(1);
       if (registerItem) {
         const basketItem: BasketItem = {
@@ -58,7 +58,7 @@ const PrescriptionList: React.FC<Props> = ({ open, basketItems, setBasketItems, 
             unregistered: false,
             costPrice: null,
             avgCostPrice: null,
-            sellingPrice: prescription.amount,
+            sellingPrice: prescription.copayment,
             stockTaxClass: null,
             sellingTaxClass: registerItem.taxClass,
             stockTax: null,
