@@ -3,7 +3,7 @@ import { Button, Form, Modal, Table, NumberPad } from './components';
 import { useAppContext } from './AppContext';
 import { BasketItem } from './types';
 import { SaleLocal, SaleDetailLocal } from './realmConfig';
-import { createId, toNumber, PATIENT_DIVISION } from './tools';
+import { createId, toNumber, PATIENT_DIVISION, CONTAINER_DIVISION, HOME_TREATMENT_DIVISION } from './tools';
 import { printReceipt as printReceiptEpson } from './eposPrinter';
 import { printReceipt as printReceiptStar } from './starPrinter';
 import Loader from './components/Loader';
@@ -103,7 +103,10 @@ const RegisterPayment: React.FC<Props> = ({
       await Promise.all(
         basketItems
           .filter((item) => {
-            return item.division === PATIENT_DIVISION && item.prescription;
+            return (
+              [PATIENT_DIVISION, CONTAINER_DIVISION, HOME_TREATMENT_DIVISION].includes(item.division) &&
+              item.prescription
+            );
           })
           .map((item) => {
             window.electronAPI.setFixedPrescription(item.prescription);

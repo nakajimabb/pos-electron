@@ -214,8 +214,10 @@ export const toDateString = (date: Date, format: string) => {
 };
 
 export const PATIENT_DIVISION = '1';
+export const CONTAINER_DIVISION = '3';
 export const OTC_DIVISION = '5';
 export const OTC_REDUCED_DIVISION = '6';
+export const HOME_TREATMENT_DIVISION = '7';
 export const OTC_CODE = '9014';
 export const OTC_REDUCED_CODE = '9016';
 
