@@ -38,7 +38,7 @@ const RegisterOpen: React.FC = () => {
       await window.electronAPI.updateLocalDb();
       navigate('/');
     } catch (error) {
-      setError(error);
+      setError(error.message);
       setLoading(false);
     }
   };

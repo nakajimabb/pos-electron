@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { parse } from 'date-fns';
 import { Button, Card, Flex, Form, Grid, Icon, Table } from './components';
 import { Brand } from './components/type';
+import Loader from './components/Loader';
 import { useAppContext } from './AppContext';
 import RegisterPayment from './RegisterPayment';
 import RegisterInput from './RegisterInput';
@@ -38,6 +39,7 @@ const RegisterMain: React.FC = () => {
   const [registerClosed, setRegisterClosed] = useState<boolean>(false);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatusLocal>();
   const [appVersion, setAppVersion] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const registerSign = registerMode === 'Return' ? -1 : 1;
 
   const findProduct = async (code: string) => {
@@ -195,6 +197,7 @@ const RegisterMain: React.FC = () => {
 
   return (
     <div className="flex w-full h-screen">
+      {loading && <Loader />}
       <RegisterPayment
         open={openPayment}
         registerMode={registerMode}
@@ -496,10 +499,29 @@ const RegisterMain: React.FC = () => {
       <Card className="m-2 w-1/2">
         <Card.Body>
           <Flex justify_content="between">
-            <p className="mt-1 mr-2 text-sm text-left">
-              <a href="https://pos-register-a5165.web.app/menu_list" className="underline ml-2 hidden">
-                在庫管理
-              </a>
+            <p className="mt-1 ml-2 text-sm text-left">
+              {basketItems.length === 0 ? (
+                <span
+                  className="underline cursor-pointer"
+                  onClick={async (e) => {
+                    if (window.confirm('商品マスタを更新します。\nよろしいですか？')) {
+                      setLoading(true);
+                      try {
+                        await window.electronAPI.updateLocalDb();
+                        setLoading(false);
+                        window.alert('商品マスタの更新が完了しました。');
+                      } catch (error) {
+                        setLoading(false);
+                        window.alert(error.message);
+                      }
+                    }
+                  }}
+                >
+                  商品マスタ更新
+                </span>
+              ) : (
+                <span className="underline">商品マスタ更新</span>
+              )}
             </p>
             <p className="mt-1 mr-2 text-sm text-right">
               {currentShop && `${nameWithCode(currentShop)} \u00A0`}

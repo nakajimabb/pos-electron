@@ -58,7 +58,7 @@ const ReceiptList: React.FC = () => {
         setSales(salesData);
       }
     } catch (error) {
-      setError(error);
+      setError(error.message);
     }
   }, [currentShop, dateTimeFrom, dateTimeTo]);
 

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, autoUpdater, shell } from 'electron';
 import Realm from 'realm';
 import ElectronStore from 'electron-store';
+import ElectronLog from 'electron-log';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
@@ -201,68 +202,72 @@ const syncSales = () => {
   console.log('syncSales');
   const files = fs.readdirSync(SIPS_SALES_DIR);
   files.forEach((fileName) => {
-    const buffer = fs.readFileSync(path.format({ dir: SIPS_SALES_DIR, base: fileName }));
-    const content = iconv.decode(buffer, 'Shift_JIS');
-    const data = JSON.parse(content);
-    if (data) {
-      const saleExisted = realm.objectForPrimaryKey<SaleLocal>('Sale', data.sale.id);
-      if (!saleExisted) {
-        const sale = data.sale;
-        const saleDetails = data.saleDetails;
+    try {
+      const buffer = fs.readFileSync(path.format({ dir: SIPS_SALES_DIR, base: fileName }));
+      const content = iconv.decode(buffer, 'Shift_JIS');
+      const data = JSON.parse(content);
+      if (data) {
+        const saleExisted = realm.objectForPrimaryKey<SaleLocal>('Sale', data.sale.id);
+        if (!saleExisted) {
+          const sale = data.sale;
+          const saleDetails = data.saleDetails;
 
-        if (sale.inputMode === 'Normal') {
-          realm.write(() => {
-            realm.create<SaleLocal>('Sale', {
-              id: sale.id,
-              receiptNumber: sale.receiptNumber,
-              shopCode: sale.shopCode,
-              createdAt: sale.createdAt,
-              detailsCount: sale.detailsCount,
-              salesTotal: sale.salesTotal,
-              taxTotal: sale.taxTotal,
-              discountTotal: sale.discountTotal,
-              paymentType: sale.paymentType,
-              cashAmount: sale.cashAmount,
-              salesTaxFreeTotal: sale.salesTaxFreeTotal,
-              salesNormalTotal: sale.salesNormalTotal,
-              salesReducedTotal: sale.salesReducedTotal,
-              taxNormalTotal: sale.taxNormalTotal,
-              taxReducedTotal: sale.taxReducedTotal,
-              status: sale.status,
-              inputMode: sale.inputMode,
-            });
+          if (sale.inputMode === 'Normal') {
+            realm.write(() => {
+              realm.create<SaleLocal>('Sale', {
+                id: sale.id,
+                receiptNumber: sale.receiptNumber,
+                shopCode: sale.shopCode,
+                createdAt: sale.createdAt,
+                detailsCount: sale.detailsCount,
+                salesTotal: sale.salesTotal,
+                taxTotal: sale.taxTotal,
+                discountTotal: sale.discountTotal,
+                paymentType: sale.paymentType,
+                cashAmount: sale.cashAmount,
+                salesTaxFreeTotal: sale.salesTaxFreeTotal,
+                salesNormalTotal: sale.salesNormalTotal,
+                salesReducedTotal: sale.salesReducedTotal,
+                taxNormalTotal: sale.taxNormalTotal,
+                taxReducedTotal: sale.taxReducedTotal,
+                status: sale.status,
+                inputMode: sale.inputMode,
+              });
 
-            saleDetails.forEach((saleDetail: SaleDetailLocal) => {
-              realm.create<SaleDetailLocal>('SaleDetail', {
-                saleId: saleDetail.saleId,
-                index: saleDetail.index,
-                productCode: saleDetail.productCode,
-                productName: saleDetail.productName,
-                abbr: saleDetail.abbr,
-                kana: saleDetail.kana,
-                note: saleDetail.note,
-                hidden: saleDetail.hidden,
-                unregistered: saleDetail.unregistered,
-                sellingPrice: saleDetail.sellingPrice,
-                costPrice: saleDetail.costPrice,
-                avgCostPrice: saleDetail.avgCostPrice,
-                sellingTaxClass: saleDetail.sellingTaxClass,
-                stockTaxClass: saleDetail.stockTaxClass,
-                sellingTax: saleDetail.sellingTax,
-                stockTax: saleDetail.stockTax,
-                selfMedication: saleDetail.selfMedication,
-                supplierCode: saleDetail.supplierCode,
-                noReturn: saleDetail.noReturn,
-                division: saleDetail.division,
-                quantity: saleDetail.quantity,
-                discount: saleDetail.discount,
-                outputReceipt: saleDetail.outputReceipt,
-                status: saleDetail.status,
+              saleDetails.forEach((saleDetail: SaleDetailLocal) => {
+                realm.create<SaleDetailLocal>('SaleDetail', {
+                  saleId: saleDetail.saleId,
+                  index: saleDetail.index,
+                  productCode: saleDetail.productCode,
+                  productName: saleDetail.productName,
+                  abbr: saleDetail.abbr,
+                  kana: saleDetail.kana,
+                  note: saleDetail.note,
+                  hidden: saleDetail.hidden,
+                  unregistered: saleDetail.unregistered,
+                  sellingPrice: saleDetail.sellingPrice,
+                  costPrice: saleDetail.costPrice,
+                  avgCostPrice: saleDetail.avgCostPrice,
+                  sellingTaxClass: saleDetail.sellingTaxClass,
+                  stockTaxClass: saleDetail.stockTaxClass,
+                  sellingTax: saleDetail.sellingTax,
+                  stockTax: saleDetail.stockTax,
+                  selfMedication: saleDetail.selfMedication,
+                  supplierCode: saleDetail.supplierCode,
+                  noReturn: saleDetail.noReturn,
+                  division: saleDetail.division,
+                  quantity: saleDetail.quantity,
+                  discount: saleDetail.discount,
+                  outputReceipt: saleDetail.outputReceipt,
+                  status: saleDetail.status,
+                });
               });
             });
-          });
+          }
         }
       }
+    } catch (error) {
+      ElectronLog.error(error);
     }
   });
 };
@@ -913,58 +918,62 @@ ipcMain.handle('getPrescriptions', (event, dateString) => {
     files = files.filter((fileName) => fileName.substring(3, 11) === dateString);
   }
   files.sort().forEach((fileName) => {
-    const buffer = fs.readFileSync(path.format({ dir: SIPS_DATA_DIR, base: fileName }));
-    const content = iconv.decode(buffer, 'Shift_JIS');
-    const lines = content.split(/\r?\n/);
-    const data: Prescription = {
-      code: '',
-      sequence: 0,
-      patientName: '',
-      patientKana: '',
-      amount: 0,
-      copayment: 0,
-      containerCost: 0,
-      homeTreatment: 0,
-    };
-    lines.forEach((line) => {
-      const cols = line.split(',');
-      if (cols.length > 0) {
-        if (cols[0] === '1') {
-          data.patientName = cols[3];
-          data.patientKana = cols[2];
-        } else if (cols[0] === '2') {
-          if (data.sequence == 0) {
-            data.code = cols[1];
-            data.sequence = Number(cols[2]);
+    try {
+      const buffer = fs.readFileSync(path.format({ dir: SIPS_DATA_DIR, base: fileName }));
+      const content = iconv.decode(buffer, 'Shift_JIS');
+      const lines = content.split(/\r?\n/);
+      const data: Prescription = {
+        code: '',
+        sequence: 0,
+        patientName: '',
+        patientKana: '',
+        amount: 0,
+        copayment: 0,
+        containerCost: 0,
+        homeTreatment: 0,
+      };
+      lines.forEach((line) => {
+        const cols = line.split(',');
+        if (cols.length > 0) {
+          if (cols[0] === '1') {
+            data.patientName = cols[3];
+            data.patientKana = cols[2];
+          } else if (cols[0] === '2') {
+            if (data.sequence == 0) {
+              data.code = cols[1];
+              data.sequence = Number(cols[2]);
+            }
+          } else if (cols[0] === '5') {
+            data.copayment = Number(cols[13]);
+            if (cols[14]) data.containerCost = Number(cols[14]);
+            if (cols[15]) data.homeTreatment = Number(cols[15]);
+            data.amount = data.copayment + data.containerCost + data.homeTreatment;
           }
-        } else if (cols[0] === '5') {
-          data.copayment = Number(cols[13]);
-          if (cols[14]) data.containerCost = Number(cols[14]);
-          if (cols[15]) data.homeTreatment = Number(cols[15]);
-          data.amount = data.copayment + data.containerCost + data.homeTreatment;
         }
-      }
-    });
+      });
 
-    const dataType = fileName.substring(0, 1);
-    const prescriptionCode = fileName.substring(1, 16);
-    const existedIndex = result.findIndex((d) => d.code === prescriptionCode);
-    switch (dataType) {
-      case 'A':
-        if (existedIndex < 0) {
-          result.push(data);
-        }
-        break;
-      case 'U':
-        if (existedIndex >= 0) {
-          result.splice(existedIndex, 1, data);
-        }
-        break;
-      case 'D':
-        if (existedIndex >= 0) {
-          result.splice(existedIndex, 1);
-        }
-        break;
+      const dataType = fileName.substring(0, 1);
+      const prescriptionCode = fileName.substring(1, 16);
+      const existedIndex = result.findIndex((d) => d.code === prescriptionCode);
+      switch (dataType) {
+        case 'A':
+          if (existedIndex < 0) {
+            result.push(data);
+          }
+          break;
+        case 'U':
+          if (existedIndex >= 0) {
+            result.splice(existedIndex, 1, data);
+          }
+          break;
+        case 'D':
+          if (existedIndex >= 0) {
+            result.splice(existedIndex, 1);
+          }
+          break;
+      }
+    } catch (error) {
+      ElectronLog.error(error);
     }
   });
   return result.filter((data) => data.amount !== 0);
@@ -978,32 +987,36 @@ ipcMain.handle('getFixedPrescriptions', (event, dateString) => {
     files = files.filter((fileName) => fileName.substring(2, 10) === dateString);
   }
   files.forEach((fileName) => {
-    const buffer = fs.readFileSync(path.format({ dir: SIPS_FIXED_DIR, base: fileName }));
-    const content = iconv.decode(buffer, 'Shift_JIS');
-    const lines = content.split(/\r?\n/);
-    const data: Prescription = {
-      code: '',
-      sequence: 0,
-      patientName: '',
-      patientKana: '',
-      amount: 0,
-      copayment: 0,
-      containerCost: 0,
-      homeTreatment: 0,
-    };
-    const line = lines[0];
-    const cols = line.split(',');
-    if (cols.length > 0) {
-      data.code = cols[0];
-      data.sequence = Number(cols[1]);
-      data.patientName = cols[2];
-      data.patientKana = cols[3];
-      data.copayment = Number(cols[4]);
-      if (cols[5]) data.containerCost = Number(cols[5]);
-      if (cols[6]) data.homeTreatment = Number(cols[6]);
-      data.amount = data.copayment + data.containerCost + data.homeTreatment;
+    try {
+      const buffer = fs.readFileSync(path.format({ dir: SIPS_FIXED_DIR, base: fileName }));
+      const content = iconv.decode(buffer, 'Shift_JIS');
+      const lines = content.split(/\r?\n/);
+      const data: Prescription = {
+        code: '',
+        sequence: 0,
+        patientName: '',
+        patientKana: '',
+        amount: 0,
+        copayment: 0,
+        containerCost: 0,
+        homeTreatment: 0,
+      };
+      const line = lines[0];
+      const cols = line.split(',');
+      if (cols.length > 0) {
+        data.code = cols[0];
+        data.sequence = Number(cols[1]);
+        data.patientName = cols[2];
+        data.patientKana = cols[3];
+        data.copayment = Number(cols[4]);
+        if (cols[5]) data.containerCost = Number(cols[5]);
+        if (cols[6]) data.homeTreatment = Number(cols[6]);
+        data.amount = data.copayment + data.containerCost + data.homeTreatment;
+      }
+      result.push(data);
+    } catch (error) {
+      ElectronLog.error(error);
     }
-    result.push(data);
   });
   return result;
 });
