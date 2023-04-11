@@ -510,10 +510,17 @@ const RegisterMain: React.FC = () => {
                         await window.electronAPI.updateLocalDb();
                         setLoading(false);
                         window.alert('商品マスタの更新が完了しました。');
+                        await window.electronAPI.fixFocus();
+                        document.getElementById('productCode')?.focus();
                       } catch (error) {
                         setLoading(false);
                         window.alert(error.message);
+                        await window.electronAPI.fixFocus();
+                        document.getElementById('productCode')?.focus();
                       }
+                    } else {
+                      await window.electronAPI.fixFocus();
+                      document.getElementById('productCode')?.focus();
                     }
                   }}
                 >
