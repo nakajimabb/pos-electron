@@ -128,7 +128,7 @@
     "react-router-dom": "^6.4.3",
     "react-svg": "^15.1.11",
     "react-to-print": "^2.14.8",
-    "realm": "^11.1.0",
+    "realm": "^11.7.0",
     "update-electron-app": "^2.0.1"
   }
 }
