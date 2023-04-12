@@ -5,7 +5,7 @@ import ElectronLog from 'electron-log';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
-import { format, addMonths } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { updateLocalDb, syncFirestore } from './localDb';
 import {
   ProductLocal,
@@ -83,10 +83,10 @@ const createWindow = (): void => {
     const launched = store.get('LAUNCHED');
     if (launched) {
       try {
-        syncSales();
+        // syncSales();
         syncFirestore();
       } catch (error) {
-        console.log(error);
+        ElectronLog.error(error);
       }
     }
   }, 5 * 60 * 1000);
@@ -177,7 +177,7 @@ const initSipsDir = () => {
 const deleteOldSipsFiles = () => {
   if (!SIPS_INDEX_DIR) return;
   let indexfiles = fs.readdirSync(SIPS_INDEX_DIR);
-  const dateString = format(addMonths(new Date(), -1), 'yyyyMMdd');
+  const dateString = format(addDays(new Date(), -7), 'yyyyMMdd');
   indexfiles = indexfiles.filter((fileName) => fileName.substring(3, 11) < dateString);
   indexfiles.forEach((fileName) => {
     fs.unlinkSync(path.format({ dir: SIPS_INDEX_DIR, base: fileName }));
@@ -190,11 +190,11 @@ const deleteOldSipsFiles = () => {
     fs.unlinkSync(path.format({ dir: SIPS_FIXED_DIR, base: fileName }));
   });
 
-  let salesfiles = fs.readdirSync(SIPS_SALES_DIR);
-  salesfiles = salesfiles.filter((fileName) => fileName.substring(0, 8) < dateString);
-  salesfiles.forEach((fileName) => {
-    fs.unlinkSync(path.format({ dir: SIPS_SALES_DIR, base: fileName }));
-  });
+  // let salesfiles = fs.readdirSync(SIPS_SALES_DIR);
+  // salesfiles = salesfiles.filter((fileName) => fileName.substring(0, 8) < dateString);
+  // salesfiles.forEach((fileName) => {
+  //   fs.unlinkSync(path.format({ dir: SIPS_SALES_DIR, base: fileName }));
+  // });
 };
 
 const syncSales = () => {
@@ -639,21 +639,21 @@ ipcMain.handle('createSaleWithDetails', (event, sale, saleDetails) => {
       });
     });
   });
-  if (SIPS_SALES_DIR) {
-    const fileName = path.format({
-      dir: SIPS_SALES_DIR,
-      name: `${format(new Date(), 'yyyyMMdd')}-${sale.id}`,
-      ext: '.json',
-    });
-    fs.writeFileSync(fileName, '');
-    var fd = fs.openSync(fileName, 'w');
+  // if (SIPS_SALES_DIR) {
+  //   const fileName = path.format({
+  //     dir: SIPS_SALES_DIR,
+  //     name: `${format(new Date(), 'yyyyMMdd')}-${sale.id}`,
+  //     ext: '.json',
+  //   });
+  //   fs.writeFileSync(fileName, '');
+  //   var fd = fs.openSync(fileName, 'w');
 
-    const data = { sale, saleDetails };
-    var buf = iconv.encode(JSON.stringify(data), 'Shift_JIS');
-    fs.write(fd, buf, 0, buf.length, (error) => {
-      if (error) console.log(error);
-    });
-  }
+  //   const data = { sale, saleDetails };
+  //   var buf = iconv.encode(JSON.stringify(data), 'Shift_JIS');
+  //   fs.write(fd, buf, 0, buf.length, (error) => {
+  //     if (error) console.log(error);
+  //   });
+  // }
 });
 
 ipcMain.handle('deleteSaleWithDetails', (event, id) => {

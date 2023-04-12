@@ -32,7 +32,7 @@ const RegisterClose: React.FC = () => {
           await window.electronAPI.setRegisterStatus(status);
         }
         await window.electronAPI.setStore('SYNC_FIRESTORE', '1');
-        await window.electronAPI.syncSales();
+        // await window.electronAPI.syncSales();
         await window.electronAPI.syncFirestore();
         if (false) {
           const functions = getFunctions(app, 'asia-northeast1');
