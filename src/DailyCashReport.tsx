@@ -131,7 +131,7 @@ const DailyCashReport: React.FC = () => {
           )) as SaleDetailLocal[];
 
           saleDetailLocals.forEach((detail) => {
-            const amount = (Number(detail.sellingPrice) * detail.quantity - detail.discount) * registerSign;
+            const amount = Number(detail.sellingPrice) * detail.quantity * registerSign;
             reportItemsData['customerAmountTotal'] += amount;
             if (sale.paymentType === 'Cash') {
               reportItemsData['cashAmountTotal'] += amount;
@@ -146,7 +146,9 @@ const DailyCashReport: React.FC = () => {
             if (detail.division === OTC_DIVISION && detail.sellingTax === 8) {
               division = OTC_REDUCED_DIVISION;
             }
-            reportItemsData[`division${division}CountTotal`] += 1;
+            if (detail.productCode) {
+              reportItemsData[`division${division}CountTotal`] += 1;
+            }
             reportItemsData[`division${division}AmountTotal`] += amount;
             if (detail.discount !== 0) {
               reportItemsData[`division${division}DiscountCountTotal`] += 1;
