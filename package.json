@@ -1,7 +1,7 @@
 {
   "name": "pos-electron",
   "productName": "PC-register",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "PCレジ",
   "main": ".webpack/main",
   "scripts": {
